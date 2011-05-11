@@ -1,0 +1,3 @@
+//#define STAUBLI_IP "http://192.168.1.254:5653/" 	//physical CS8
+//#define STAUBLI_IP "http://128.59.20.63:5653/"	//ANTIGUA
+//#define STAUBLI_IP "http://128.59.19.61:5653/"	//Thomas' computer

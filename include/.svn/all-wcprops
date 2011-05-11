@@ -1,0 +1,71 @@
+K 25
+svn:wc:ra_dav:version-url
+V 37
+/svn/!svn/ver/4/trunk/Staubli/include
+END
+soapH.h
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svn/!svn/ver/4/trunk/Staubli/include/soapH.h
+END
+TX60L.h
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svn/!svn/ver/4/trunk/Staubli/include/TX60L.h
+END
+stdsoap2.h
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/!svn/ver/4/trunk/Staubli/include/stdsoap2.h
+END
+soapCS8ServerV0Proxy.h
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/4/trunk/Staubli/include/soapCS8ServerV0Proxy.h
+END
+soapCS8ServerV1Proxy.h
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/4/trunk/Staubli/include/soapCS8ServerV1Proxy.h
+END
+soapStub.h
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/!svn/ver/4/trunk/Staubli/include/soapStub.h
+END
+CS8ServerV0.nsmap
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/!svn/ver/4/trunk/Staubli/include/CS8ServerV0.nsmap
+END
+soapCS8ServerV3Proxy.h
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/4/trunk/Staubli/include/soapCS8ServerV3Proxy.h
+END
+CS8ServerV1.nsmap
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/!svn/ver/4/trunk/Staubli/include/CS8ServerV1.nsmap
+END
+controller.h
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/svn/!svn/ver/4/trunk/Staubli/include/controller.h
+END
+CS8ServerV3.nsmap
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/!svn/ver/4/trunk/Staubli/include/CS8ServerV3.nsmap
+END
