@@ -8,6 +8,10 @@
 #include "staubliTX60/InvKinematics.h"
 #include "staubliTX60/SetJointsAction.h"
 #include "staubliTX60/SetCartesianAction.h"
+#include "staubliTX60/SetJointTrajectoryAction.h"
+#include "staubliTX60/SetJointTrajectoryGoal.h"
+#include "staubliTX60/JointTrajectoryPoint.h"
+#include "staubliTX60/ResetMotion.h"
 #include <cstring>
 #include <vector>
 #include <cmath>
@@ -17,9 +21,22 @@
 #include "soapCS8ServerV3Proxy.h"
 #include "CS8ServerV0.nsmap"
 
+#include <boost/foreach.hpp>
+
+
+
 TX60L staubli;
-const double ERROR_EPSILON = 1E-6;
+const double ERROR_EPSILON = 1E-4;
 const size_t CONTROL_FREQ  = 20;
+
+bool cancelMotion(staubliTX60::ResetMotion::Request & req,
+		  staubliTX60::ResetMotion::Response & res){
+  staubli.ResetMotion();
+  res.succeeded = true;
+  return true;
+  
+
+}
 
 bool getCartesian(staubliTX60::GetCartesian::Request  &req,
       staubliTX60::GetCartesian::Response &res ) {
@@ -160,7 +177,7 @@ class SetJointsAction{
 	    double error = fabs(j1[0]-j2[0])+ fabs(j1[1]-j2[1])+ fabs(j1[2]-j2[2])+
 	       fabs(j1[3]-j2[3])+ fabs(j1[4]-j2[4])+ fabs(j1[5]-j2[5]);
 	    //	    ROS_INFO( "Error to target %lf", error );
-	    return error < ERROR_EPSILON;
+	    return error < ERROR_EPSILON || staubli.IsJointQueueEmpty();
 	 }else {
 	    ROS_ERROR("Error when determining end of movement.");
 	    return false;
@@ -171,6 +188,7 @@ class SetJointsAction{
 	 //staubli.ResetMotion();
 	 ros::Rate rate(10);
 	 bool success = true;
+	 ROS_INFO("Set Joints Action Cmd received \n");
 	 if( staubli.MoveJoints(goal->j) ){
 	    ROS_INFO("Cmd received, moving to desired joint angles.");
 	    while(true){
@@ -191,6 +209,101 @@ class SetJointsAction{
 	    ROS_ERROR("Cannot move to specified joints' configuration.");
 	 }
       }
+};
+
+class SetJointTrajectoryAction{
+   protected:
+      ros::NodeHandle nh_;
+      actionlib::SimpleActionServer<staubliTX60::SetJointTrajectoryAction> as_;
+      std::string action_name_;
+      // create messages that are used to published feedback/result
+      staubliTX60::SetJointTrajectoryFeedback feedback_;
+      staubliTX60::SetJointTrajectoryResult result_;
+  
+   public:
+      SetJointTrajectoryAction(std::string name) :
+	 as_(nh_, name, boost::bind(&SetJointTrajectoryAction::setJointTrajectoryCB, this, _1)),
+	 action_name_(name) {}
+
+      bool polling( const std::vector<double> &j1 ) {
+	 std::vector<double> j2;
+	 j2.resize(6);
+	 ROS_INFO("Set Joint Trajectory Cmd Received \n");
+	 if(staubli.GetRobotJoints(j2))
+	   {
+	     feedback_.j = j2;
+	     as_.publishFeedback(feedback_);
+	     double error = fabs(j1[0]-j2[0])+ fabs(j1[1]-j2[1])+ fabs(j1[2]-j2[2])+
+	       fabs(j1[3]-j2[3])+ fabs(j1[4]-j2[4])+ fabs(j1[5]-j2[5]);
+	     //	    ROS_INFO( "Error to target %lf", error );
+	     if ( staubli.IsJointQueueEmpty() )
+	       {
+		 result_.j = j2;
+		 if( error >= ERROR_EPSILON )
+		   {
+		     //Something emptied the joint goal queue, but the goal was not reached
+		     as_.setAborted(result_);
+
+		   } else
+		   {
+		     as_.setSucceeded(result_);
+		   }  
+		 return true;
+	       }else  //if (staubli.IsJointQueueEmpty)
+	       {
+		 return false;
+	      } 
+	   } else {//	 if(staubli.GetRobotJoints(j2))
+	   //unable to query robot state -- stop robot if possible, this is an important error
+	    ROS_ERROR("****SetJointTrajectoryAction:: Communications Failure! Error when determining end of movement. *****  All goals cancelled and robot queue reset.  Staubli Server shutdown!!!");
+	    as_.setAborted(result_ ,"Communications failure - could not query joint position\n");	    
+	    //communication failures are bad.  
+	    //Shut down the action server if they occur.  Don't accept new goals.  
+	    as_.shutdown();
+	    //Cancel existing motion of robot if possible
+	    staubli.ResetMotion();
+	    //kill entire server
+	    ros::shutdown();
+	    return true;
+	 }
+      }
+
+      void setJointTrajectoryCB( const staubliTX60::SetJointTrajectoryGoalConstPtr &goal ) 
+      {
+	 //staubli.ResetMotion();
+	 ros::Rate rate(10);
+	 bool success = true;
+	 //only one goal can be active at a time in this type of server.  Cancel previous motion
+	 staubli.ResetMotion();
+	 as_.acceptNewGoal();
+	 //For simple action servers, previous goals stop being tracked, the robot shoud
+	 BOOST_FOREACH(const staubliTX60::JointTrajectoryPoint &jointGoal,  goal->jointTrajectory){
+	   if( !staubli.MoveJoints(jointGoal.jointValues, jointGoal.params.movementType, 
+				   jointGoal.params.jointVelocity, jointGoal.params.jointAcc, 
+				   jointGoal.params.jointDec, 
+				   jointGoal.params.endEffectorMaxTranslationVel, 
+				   jointGoal.params.endEffectorMaxRotationalVel))
+	      //couldn't accept joint goal
+	     as_.setAborted(result_, "Could not accept goal\n");
+	 }
+	 if( as_.isActive() )
+	   {
+	     ROS_INFO("Cmd received, moving to desired joint angles.");
+	     while(as_.isActive()){
+	       if (as_.isPreemptRequested() || !ros::ok()) {
+		 ROS_INFO("%s: Preempted", action_name_.c_str());
+		 // set the action state to preempted
+		 staubli.ResetMotion();
+		 as_.setPreempted();
+		 
+		 break;
+	       }
+	       if( polling(goal->jointTrajectory.back().jointValues) ) break;
+	       rate.sleep();
+	     }
+	   }
+      }
+
 };
 
 class SetCartesianAction{
@@ -218,14 +331,16 @@ class SetCartesianAction{
 	    feedback_.ry = (double) now[4];
 	    feedback_.rz = (double) now[5];
 	    as_.publishFeedback(feedback_);
-	   ROS_INFO("GOAL: %f, %f, %f, %f, %f, %f; %f, %f, %f, %f, %f, %f", goal[0], goal[1], goal[2], goal[3], goal[4], goal[5], now[0], now[1], now[2], now[3], now[4], now[5]);
 	    double error = 
-	       fabs(goal[0]-now[0])+ fabs(goal[1]-now[1])+ fabs(goal[2]-now[2]);
+	      fabs(goal[0]-now[0])+ fabs(goal[1]-now[1])+ fabs(goal[2]-now[2]);
+	    //	   ROS_INFO("GOAL: %f, %f, %f, %f, %f, %f; %f, %f, %f, %f, %f, %f", goal[0], goal[1], goal[2], goal[3], goal[4], goal[5], now[0], now[1], now[2], now[3], now[4], now[5]);
+	    ROS_INFO("distance: %f", error);
+
 	    //   fmod( fabs(goal[3]-now[3]), M_PI ) + 
 	    //   fmod( fabs(goal[4]-now[4]), M_PI ) + 
 	    //   fmod( fabs(goal[5]-now[5]), M_PI ) ;
-	    ROS_INFO("SUCCEEDED MOVING: %f, %f", error, ERROR_EPSILON);
-	    return error < ERROR_EPSILON;
+	    //	    ROS_INFO("SUCCEEDED MOVING: %f, %f", error, ERROR_EPSILON);
+	    return error < ERROR_EPSILON || staubli.IsJointQueueEmpty();
 	 }else {
 	    ROS_ERROR("Error when determining end of movement.");
 	    return false;
@@ -258,17 +373,16 @@ class SetCartesianAction{
 		     success = false;
 		     break;
 		  }
-		  ROS_INFO("check");
 		  if( polling(goal) ){ ROS_INFO("succeeded");  break;}
 		  rate.sleep();
 	       }
 	       if(success) as_.setSucceeded(result_);
 	    } else { 
-	       as_.setAborted();
+	       as_.setAborted(result_);
 	       ROS_ERROR( "Cannot move to specified Cartesian position." );
 	    }
 	 } else { 
-	    as_.setAborted();
+	    as_.setAborted(result_);
 	    ROS_ERROR("Cannot get inverse kinematics.");
 	 }
       }
@@ -295,7 +409,7 @@ int main(int argc, char **argv)
       ros::ServiceServer srv_getRotMat;
 
       if( srv_getCartesian = n.advertiseService( "getCartesian", getCartesian))
-	 ROS_INFO("Srv up: get staubli's Cartesian positoin.");
+	 ROS_INFO("Srv up: get staubli's Cartesian position.");
       if( srv_getJoints    = n.advertiseService("getJoints",    getJoints))
 	 ROS_INFO("Srv up: get staubli's joints' configuration.");
       if( srv_getRotMat    = n.advertiseService("getRotMat",    getRotMat))
@@ -304,8 +418,12 @@ int main(int argc, char **argv)
 	 ROS_INFO("Srv up: get staubli's forward kinematics.");
       if( srv_invKinematics= n.advertiseService("invKinematics", invKinematics))
 	 ROS_INFO("Srv up: get staubli's inverse kinematics.");
-      SetJointsAction     setJointsAction   ("setJoints");
+      if( srv_invKinematics= n.advertiseService("cancelMotion", cancelMotion))
+	 ROS_INFO("Srv up: cancel motion.");
+      SetJointsAction setJointsAction   ("setJoints");
       ROS_INFO("Srv up: set staubli's joints' configuration.");
+      SetJointTrajectoryAction setJointTrajectoryAction   ("setJointTrajectory");
+      ROS_INFO("Srv up: set staubli's joint trajectory.");
       SetCartesianAction setCartesianAction("setCartesian");
       ROS_INFO("Srv up: set staubli's Cartesian pos.");
 

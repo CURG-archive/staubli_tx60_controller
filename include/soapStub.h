@@ -1632,6 +1632,10 @@ public:
 	         ns6__MotionDesc() : tool(NULL), frame(NULL), absRel((enum ns6__MoveType)0),
 				 config(NULL), blendType((enum ns6__BlendType)0), distBlendPrev(0.05),
 				 distBlendNext(0.05), vel(1.0), acc(1.0), dec(1.0), transVel(99999), rotVel(99999), freq(1.0), soap(NULL) { }
+                  ns6__MotionDesc(enum ns6__BlendType mBlendType, double mDistBlendPrev, double emDistBlendNext, double mVel, double mAcc, double mDec, double mTransVel, double mRotVel) : tool(NULL), frame(NULL), absRel((enum ns6__MoveType)0),
+				 config(NULL), blendType(mBlendType), distBlendPrev(mDistBlendPrev),
+	  distBlendNext(distBlendNext), vel(mVel), acc(mAcc), dec(mDec), transVel(mTransVel), rotVel(mRotVel), freq(1.0), soap(NULL) { }
+	
 	virtual ~ns6__MotionDesc() { }
 };
 #endif
@@ -2024,7 +2028,7 @@ public:
 	virtual int soap_out(struct soap*, const char*, int, const char*) const;
 	virtual void *soap_get(struct soap*, const char*, const char*);
 	virtual void *soap_in(struct soap*, const char*, const char*);
-	         _ns6__schedulerRefresh() : soap(NULL) { }
+	_ns6__schedulerRefresh() : soap(NULL) { }
 	virtual ~_ns6__schedulerRefresh() { }
 };
 #endif
@@ -2047,7 +2051,7 @@ public:
 	virtual int soap_out(struct soap*, const char*, int, const char*) const;
 	virtual void *soap_get(struct soap*, const char*, const char*);
 	virtual void *soap_in(struct soap*, const char*, const char*);
-	         _ns6__MotionAndRobotsPos() : schedulingMode((enum ns6__SchedulingMode)0), motionEmpty((bool)0), allRobotsPos(NULL), soap(NULL) { }
+        _ns6__MotionAndRobotsPos() : schedulingMode((enum ns6__SchedulingMode)0), motionEmpty((bool)0), allRobotsPos(NULL), soap(NULL) { }
 	virtual ~_ns6__MotionAndRobotsPos() { }
 };
 #endif

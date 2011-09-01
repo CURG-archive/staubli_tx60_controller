@@ -163,7 +163,8 @@ bool TX60L::ResetMotion(){
 	return true;
 }
 
-bool TX60L::MoveJoints(std::vector<double> jnts){
+bool TX60L::MoveJoints(std::vector<double> jnts, int btype, double jointvel, 
+		       double acc, double dec, double tooltipvel, double rotvel){
 	if(!mIsLoggedIn)
 		return false;
 	_ns6__moveJJ * joints = new _ns6__moveJJ();
@@ -173,9 +174,11 @@ bool TX60L::MoveJoints(std::vector<double> jnts){
 	ns1__JointPos *jointPos = new ns1__JointPos();
 	jointPos->item = jnts;
 	joints->joint = jointPos;
-
+	double blendRadius = .05;
 	//initialize the motion desctiptor
-	ns6__MotionDesc * md = new ns6__MotionDesc();
+	ns6__MotionDesc * md = new ns6__MotionDesc(ns6__BlendType(btype), blendRadius, blendRadius,
+						   jointvel, acc, dec,
+						   tooltipvel, rotvel);
 	InitializeMotionDesc(md);
 	joints->mdesc = md;
 
@@ -186,6 +189,14 @@ bool TX60L::MoveJoints(std::vector<double> jnts){
 	delete joints;
 	delete jointsResponse;
 	return true;
+}
+
+bool TX60L::IsJointQueueEmpty(){
+  _ns6__schedulerRefresh  sr_req;
+  _ns6__MotionAndRobotsPos sr_resp;
+  if(mCS8ServerV3->schedulerRefresh(&sr_req, &sr_resp) != SOAP_OK)
+    std::cout<< "TX60L::IsJointQueueEmpty::SOAP ERROR \n";
+  return sr_resp.motionEmpty;   
 }
 
 bool TX60L::InverseKinematics(std::vector<double> pos, std::vector<double> start, std::vector<double> &jnts){
@@ -361,7 +372,8 @@ void TX60L::GetRxRyRzCoord(ns6__Frame *x_fr, double *x_Rx, double *x_Ry, double 
     }
 }
 
-void TX60L::SetFrameFromRxRyRz(ns6__Frame *x_fr, double x_Rx, double x_Ry, double x_Rz)
+void 
+TX60L::SetFrameFromRxRyRz(ns6__Frame *x_fr, double x_Rx, double x_Ry, double x_Rz)
 {
 	double l_sinRx, l_sinRy, l_sinRz;
 	double l_cosRx, l_cosRy, l_cosRz;
