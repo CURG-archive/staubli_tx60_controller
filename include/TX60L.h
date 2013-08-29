@@ -43,11 +43,12 @@ public:
 
 	//----------------- Server V3---------------//
 	bool ResetMotion();
-        bool MoveJoints(std::vector<double> jnts, int b= 0, double jointvel = 1.0, double acc = 1.0, double dec = 1.0, double tooltipvel = 99999, double rotvel = 99999);
+        bool MoveJoints(std::vector<double> jnts, int b= 0, double jointvel = 0.04, double acc = 0.04, double dec = 0.04, double tooltipvel = 99999, double rotvel = 99999, double blendPrev = 0.01, double blendNext = 0.01);
 	bool IsJointQueueEmpty();
+	bool IsRobotSettled();
 	bool InverseKinematics(std::vector<double> pos, std::vector<double> start, std::vector<double> &jnts);
 	bool ForwardKinematics(std::vector<double> jnts, std::vector<double> &pos);
-	bool MoveLine(std::vector<double> pos);
+	bool MoveLine(std::vector<double> pos, double jointvel = 0.04, double acc = 0.04, double dec = 0.04);
 	bool Power(bool on);
 	bool Stop();
 	bool Restart();
