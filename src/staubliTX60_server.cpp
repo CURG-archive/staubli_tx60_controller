@@ -25,7 +25,11 @@
 
 
 
+
+
+
 TX60L staubli;
+
 const double ERROR_EPSILON = 1E-4;
 const size_t CONTROL_FREQ  = 20;
 
@@ -40,6 +44,7 @@ bool cancelMotion(staubliTX60::ResetMotion::Request & req,
 
 bool getCartesian(staubliTX60::GetCartesian::Request  &req,
       staubliTX60::GetCartesian::Response &res ) {
+
    std::vector<double> position;
    position.resize(6);
    if(staubli.GetRobotCartesianPosition(position)){
@@ -189,7 +194,17 @@ class SetJointsAction{
 	 ros::Rate rate(10);
 	 bool success = true;
 	 ROS_INFO("Set Joints Action Cmd received \n");
-	 if( staubli.MoveJoints(goal->j) ){
+	 if( staubli.MoveJoints(goal->j,
+				goal->params.movementType,
+				goal->params.jointVelocity,
+				goal->params.jointAcc,
+				goal->params.jointDec,
+				goal->params.endEffectorMaxTranslationVel, 
+				goal->params.endEffectorMaxRotationalVel,
+				goal->params.distBlendPrev,
+				goal->params.distBlendNext
+				) )
+	   {
 	    ROS_INFO("Cmd received, moving to desired joint angles.");
 	    while(true){
 	       if (as_.isPreemptRequested() || !ros::ok()) {
@@ -228,7 +243,6 @@ class SetJointTrajectoryAction{
       bool polling( const std::vector<double> &j1 ) {
 	 std::vector<double> j2;
 	 j2.resize(6);
-	 ROS_INFO("Set Joint Trajectory Cmd Received \n");
 	 if(staubli.GetRobotJoints(j2))
 	   {
 	     feedback_.j = j2;
@@ -236,14 +250,15 @@ class SetJointTrajectoryAction{
 	     double error = fabs(j1[0]-j2[0])+ fabs(j1[1]-j2[1])+ fabs(j1[2]-j2[2])+
 	       fabs(j1[3]-j2[3])+ fabs(j1[4]-j2[4])+ fabs(j1[5]-j2[5]);
 	     //	    ROS_INFO( "Error to target %lf", error );
-	     if ( staubli.IsJointQueueEmpty() )
+	     if ( staubli.IsJointQueueEmpty() && staubli.IsRobotSettled())
 	       {
 		 result_.j = j2;
 		 if( error >= ERROR_EPSILON )
 		   {
 		     //Something emptied the joint goal queue, but the goal was not reached
 		     as_.setAborted(result_);
-
+		     ROS_WARN("Staubli queue emptied prematurely\n");
+		     
 		   } else
 		   {
 		     as_.setSucceeded(result_);
@@ -275,33 +290,60 @@ class SetJointTrajectoryAction{
 	 bool success = true;
 	 //only one goal can be active at a time in this type of server.  Cancel previous motion
 	 staubli.ResetMotion();
-	 as_.acceptNewGoal();
+	 //ROS_ERROR("staubli:: Recieved goal");
 	 //For simple action servers, previous goals stop being tracked, the robot shoud
 	 BOOST_FOREACH(const staubliTX60::JointTrajectoryPoint &jointGoal,  goal->jointTrajectory){
-	   if( !staubli.MoveJoints(jointGoal.jointValues, jointGoal.params.movementType, 
-				   jointGoal.params.jointVelocity, jointGoal.params.jointAcc, 
+	   //ROS_ERROR("movementType: %d, jointV: %lf, acc: %lf, dacc: %lf", jointGoal.params.jointVelocity, jointGoal.params.movementType, jointGoal.params.jointAcc, jointGoal.params.jointDec);
+	   /*	   if( !staubli.MoveJoints(jointGoal.jointValues,
+				   jointGoal.params.movementType,
+				   0.4,//jointGoal.params.jointVelocity,
+				   0.04,//jointGoal.params.jointAcc, 
+				   0.04,//jointGoal.params.jointDec, 
+				   jointGoal.params.endEffectorMaxTranslationVel, 
+	                           jointGoal.params.endEffectorMaxRotationalVel,
+	                           jointGoal.params.distBlendPrev,
+                        	   jointGoal.params.distBlendNext
+	       ))	    
+	   */
+	   if( !staubli.MoveJoints(jointGoal.jointValues,
+				   jointGoal.params.movementType,
+				   jointGoal.params.jointVelocity,
+				   jointGoal.params.jointAcc, 
 				   jointGoal.params.jointDec, 
 				   jointGoal.params.endEffectorMaxTranslationVel, 
-				   jointGoal.params.endEffectorMaxRotationalVel))
-	      //couldn't accept joint goal
+				   jointGoal.params.endEffectorMaxRotationalVel,
+	                           jointGoal.params.distBlendPrev,
+                        	   jointGoal.params.distBlendNext
+	       ))
+	     {
+	     //couldn't accept joint goal
 	     as_.setAborted(result_, "Could not accept goal\n");
-	 }
-	 if( as_.isActive() )
-	   {
-	     ROS_INFO("Cmd received, moving to desired joint angles.");
-	     while(as_.isActive()){
-	       if (as_.isPreemptRequested() || !ros::ok()) {
-		 ROS_INFO("%s: Preempted", action_name_.c_str());
-		 // set the action state to preempted
-		 staubli.ResetMotion();
-		 as_.setPreempted();
-		 
-		 break;
-	       }
-	       if( polling(goal->jointTrajectory.back().jointValues) ) break;
-	       rate.sleep();
-	     }
+	     ROS_INFO("staubli::Goal rejected");
+	     return;
 	   }
+	   ROS_INFO("Dist Blend Next: %f\n", jointGoal.params.distBlendNext);
+	 }
+	 if (!as_.isActive() || staubli.IsJointQueueEmpty()){
+	   ROS_INFO("Goal Not Active!!");
+	   return;
+	 }
+
+	 ROS_INFO("Cmd received, moving to desired joint angles.");
+	 while(true){
+	   if (as_.isPreemptRequested() || !ros::ok()) {
+	     ROS_INFO("%s: Preempted", action_name_.c_str());
+	     // set the action state to preempted
+	     staubli.ResetMotion();
+	     as_.setPreempted();
+	     success = false;
+	     break;
+	   }
+	   if( polling(goal->jointTrajectory.back().jointValues) ) break;
+	   rate.sleep();
+	 }
+	 if(success)
+	   as_.setSucceeded(result_);
+	 ROS_INFO("staubli::Goal ended");
       }
 
 };
@@ -358,32 +400,45 @@ class SetCartesianAction{
 	 goal.push_back( (double) goalPtr->ry );
 	 goal.push_back( (double) goalPtr->rz );
 
+	 /*	 ROS_ERROR(" %lf, %lf, %lf",   goalPtr->params.jointVelocity,
+		   goalPtr->params.jointAcc,
+		   goalPtr->params.jointDec);
+	 */
 	 if( invKinematics2( goal, goalJoints ) ) { 
-	    bool moveOK = false;
-	    if( goalPtr -> lineCtrl == 1 ) moveOK=staubli.MoveLine  (goal);
-	    else                           moveOK=staubli.MoveJoints(goalJoints);
-	    if( moveOK ){
-	       ROS_INFO("Cmd received, moving to desired Cartesian pos.");
-	       while(true){
-		  if (as_.isPreemptRequested() || !ros::ok()) {
-		     ROS_INFO("%s: Preempted", action_name_.c_str());
-		     // set the action state to preempted
-		     staubli.ResetMotion();
-		     as_.setPreempted();
-		     success = false;
-		     break;
-		  }
-		  if( polling(goal) ){ ROS_INFO("succeeded");  break;}
-		  rate.sleep();
+	   bool moveOK = false;
+	   if( goalPtr -> lineCtrl == 1 )
+	     moveOK=staubli.MoveLine  (goal,
+				       goalPtr->params.jointVelocity,
+				       goalPtr->params.jointAcc,
+				       goalPtr->params.jointDec);
+	   else
+	     moveOK=staubli.MoveJoints(goalJoints,
+				       goalPtr->params.movementType,
+				       goalPtr->params.jointVelocity,
+				       goalPtr->params.jointAcc,
+				       goalPtr->params.jointDec);
+	   if( moveOK ){
+	     ROS_INFO("Cmd received, moving to desired Cartesian pos.");
+	     while(true){
+	       if (as_.isPreemptRequested() || !ros::ok()) {
+		 ROS_INFO("%s: Preempted", action_name_.c_str());
+		 // set the action state to preempted
+		 staubli.ResetMotion();
+		 as_.setPreempted();
+		 success = false;
+		 break;
 	       }
-	       if(success) as_.setSucceeded(result_);
-	    } else { 
-	       as_.setAborted(result_);
-	       ROS_ERROR( "Cannot move to specified Cartesian position." );
-	    }
+	       if( polling(goal) ){ ROS_INFO("succeeded");  break;}
+	       rate.sleep();
+	       }
+	     if(success) as_.setSucceeded(result_);
+	   } else { 
+	     as_.setAborted(result_);
+	     ROS_ERROR( "Cannot move to specified Cartesian position." );
+	   }
 	 } else { 
-	    as_.setAborted(result_);
-	    ROS_ERROR("Cannot get inverse kinematics.");
+	   as_.setAborted(result_);
+	   ROS_ERROR("Cannot get inverse kinematics.");
 	 }
       }
 };
