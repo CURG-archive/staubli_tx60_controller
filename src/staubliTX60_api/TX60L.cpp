@@ -8,9 +8,14 @@
 using std::string;
 using std::cout;
 using std::endl;
+#include <boost/thread.hpp>
+
+boost::mutex RobotLock;
+
 
 //---------------------------------------Server V0---------------------------------//
 bool TX60L::Login(const string& url, const string& userName, const string& password){
+  boost::lock_guard<boost::mutex> lock(RobotLock);
 	if(mLogin)
 		delete mLogin;
 	if(mLoginResponse)
@@ -48,6 +53,7 @@ bool TX60L::Login(const string& url, const string& userName, const string& passw
 }
 
 void TX60L::Logoff(){
+  boost::lock_guard<boost::mutex> lock(RobotLock);
 	if(!mIsLoggedIn)
 		return;
 	_ns1__logout *logout = new _ns1__logout();
@@ -58,6 +64,7 @@ void TX60L::Logoff(){
 }
 
 bool TX60L::SetJoints(const std::vector<double>& joints){
+  boost::lock_guard<boost::mutex> lock(RobotLock);
 	if(joints.size() != 6)
 		return false;
 	if(!mIsLoggedIn)
@@ -78,6 +85,7 @@ bool TX60L::SetJoints(const std::vector<double>& joints){
 }
 
 bool TX60L::GetRobotJoints(std::vector<double>& joints){
+  boost::lock_guard<boost::mutex> lock(RobotLock);
 	if(!mIsLoggedIn)
 		return false;
 	_ns1__getRobotJointPos* robotJoints = new _ns1__getRobotJointPos();
@@ -94,6 +102,7 @@ bool TX60L::GetRobotJoints(std::vector<double>& joints){
 }
 
 bool TX60L::GetRobotCartesianPosition(std::vector<double>& position){
+  boost::lock_guard<boost::mutex> lock(RobotLock);
 	if(!mIsLoggedIn)
 		return false;
 
@@ -113,6 +122,7 @@ bool TX60L::GetRobotCartesianPosition(std::vector<double>& position){
 }
 
 bool TX60L::GetRobots(std::vector<int>& robots){
+  boost::lock_guard<boost::mutex> lock(RobotLock);
 	if(!mIsLoggedIn)
 		return false;
 	_ns1__getRobots * robotsInput = new _ns1__getRobots();
@@ -125,6 +135,7 @@ bool TX60L::GetRobots(std::vector<int>& robots){
 
 //----------------------------------------Server V1----------------------------------------//
 bool TX60L::GetApplications(std::vector<std::string>& appNames){
+  boost::lock_guard<boost::mutex> lock(RobotLock);
 	if(!mIsLoggedIn)
 		return false;
 	_ns2__getApplications * applications = new _ns2__getApplications();
@@ -139,6 +150,7 @@ bool TX60L::GetApplications(std::vector<std::string>& appNames){
 }
 
 bool TX60L::GetJointRange(std::vector<double>& min, std::vector<double>& max){
+  boost::lock_guard<boost::mutex> lock(RobotLock);
 	if(!mIsLoggedIn)
 		return false;
 	_ns2__getJointRange * jointRange = new _ns2__getJointRange();
@@ -153,6 +165,8 @@ bool TX60L::GetJointRange(std::vector<double>& min, std::vector<double>& max){
 
 //------------------------------Server V3------------------------------//
 bool TX60L::ResetMotion(){
+  boost::lock_guard<boost::mutex> lock(RobotLock);
+  std::cout<< "Motion Reset\n";
 	if(!mIsLoggedIn)
 		return false;
 	_ns6__resetMotion * resetMotion = new _ns6__resetMotion();
@@ -164,7 +178,8 @@ bool TX60L::ResetMotion(){
 }
 
 bool TX60L::MoveJoints(std::vector<double> jnts, int btype, double jointvel, 
-		       double acc, double dec, double tooltipvel, double rotvel){
+		       double acc, double dec, double tooltipvel, double rotvel, double blendPrev, double blendNext){
+  boost::lock_guard<boost::mutex> lock(RobotLock);
 	if(!mIsLoggedIn)
 		return false;
 	_ns6__moveJJ * joints = new _ns6__moveJJ();
@@ -174,9 +189,9 @@ bool TX60L::MoveJoints(std::vector<double> jnts, int btype, double jointvel,
 	ns1__JointPos *jointPos = new ns1__JointPos();
 	jointPos->item = jnts;
 	joints->joint = jointPos;
-	double blendRadius = .05;
+
 	//initialize the motion desctiptor
-	ns6__MotionDesc * md = new ns6__MotionDesc(ns6__BlendType(btype), blendRadius, blendRadius,
+	ns6__MotionDesc * md = new ns6__MotionDesc(ns6__BlendType(ns6__BlendType__BLEND_JOINT), blendPrev, blendNext,
 						   jointvel, acc, dec,
 						   tooltipvel, rotvel);
 	InitializeMotionDesc(md);
@@ -192,6 +207,7 @@ bool TX60L::MoveJoints(std::vector<double> jnts, int btype, double jointvel,
 }
 
 bool TX60L::IsJointQueueEmpty(){
+  boost::lock_guard<boost::mutex> lock(RobotLock);
   _ns6__schedulerRefresh  sr_req;
   _ns6__MotionAndRobotsPos sr_resp;
   if(mCS8ServerV3->schedulerRefresh(&sr_req, &sr_resp) != SOAP_OK)
@@ -199,7 +215,18 @@ bool TX60L::IsJointQueueEmpty(){
   return sr_resp.motionEmpty;   
 }
 
+bool TX60L::IsRobotSettled(){
+  boost::lock_guard<boost::mutex> lock(RobotLock);
+  _ns6__schedulerRefresh  sr_req;
+  _ns6__MotionAndRobotsPos sr_resp;
+  if(mCS8ServerV3->schedulerRefresh(&sr_req, &sr_resp) != SOAP_OK)
+    std::cout<< "TX60L::IsJointQueueEmpty::SOAP ERROR \n";
+  return sr_resp.allRobotsPos->RobotsPos[0]->settled;   
+
+}
+
 bool TX60L::InverseKinematics(std::vector<double> pos, std::vector<double> start, std::vector<double> &jnts){
+  boost::lock_guard<boost::mutex> lock(RobotLock);
 	if(!mIsLoggedIn)
 		return false;
 	_ns6__reverseKin *inverseKin = new _ns6__reverseKin();
@@ -240,6 +267,7 @@ bool TX60L::InverseKinematics(std::vector<double> pos, std::vector<double> start
 }
 
 bool TX60L::ForwardKinematics(std::vector<double> jnts, std::vector<double> &pos){
+  boost::lock_guard<boost::mutex> lock(RobotLock);
 	if(!mIsLoggedIn)
 		return false;
 	double Rx=0,Ry=0,Rz=0;
@@ -275,6 +303,7 @@ bool TX60L::ForwardKinematics(std::vector<double> jnts, std::vector<double> &pos
 	return true;
 }
 bool TX60L::Power(bool on){
+  boost::lock_guard<boost::mutex> lock(RobotLock);
 	if(!mIsLoggedIn)
 		return false;
 	_ns6__setPower * power = new _ns6__setPower();
@@ -287,6 +316,7 @@ bool TX60L::Power(bool on){
 }
 
 bool TX60L::Stop(){
+  boost::lock_guard<boost::mutex> lock(RobotLock);
 	if(!mIsLoggedIn)
 		return false;
 	_ns6__stopMotion * motion = new _ns6__stopMotion();
@@ -298,6 +328,7 @@ bool TX60L::Stop(){
 }
 
 bool TX60L::Restart(){
+  boost::lock_guard<boost::mutex> lock(RobotLock);
 	if(!mIsLoggedIn)
 		return false;
 	_ns6__restartMotion * motion = new _ns6__restartMotion();
@@ -308,7 +339,8 @@ bool TX60L::Restart(){
 	return true;
 }
 
-bool TX60L::MoveLine(std::vector<double> pos){
+bool TX60L::MoveLine(std::vector<double> pos, double jointvel, double acc, double dec){
+  boost::lock_guard<boost::mutex> lock(RobotLock);
 	if(!mIsLoggedIn)
 		return false;
 	_ns6__moveL * moveL = new _ns6__moveL();
@@ -322,6 +354,10 @@ bool TX60L::MoveLine(std::vector<double> pos){
 
 	//initialize the motion desctiptor
 	ns6__MotionDesc * md = new ns6__MotionDesc();
+	md->vel = jointvel;
+	md->acc = acc;
+	md->dec = dec;
+
 	InitializeMotionDesc(md);
 	moveL->mdesc = md;
 	_ns6__moveResponse * moveResponse = new _ns6__moveResponse();
@@ -336,6 +372,7 @@ bool TX60L::MoveLine(std::vector<double> pos){
 
 void TX60L::GetRxRyRzCoord(ns6__Frame *x_fr, double *x_Rx, double *x_Ry, double *x_Rz)
 {
+
 	double SMALL_FLOAT = pow(10.0, -6.0);
     double l_sinRy;
 
@@ -375,6 +412,7 @@ void TX60L::GetRxRyRzCoord(ns6__Frame *x_fr, double *x_Rx, double *x_Ry, double 
 void 
 TX60L::SetFrameFromRxRyRz(ns6__Frame *x_fr, double x_Rx, double x_Ry, double x_Rz)
 {
+
 	double l_sinRx, l_sinRy, l_sinRz;
 	double l_cosRx, l_cosRy, l_cosRz;
 
