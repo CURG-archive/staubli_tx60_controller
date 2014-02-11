@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.4.6)
-project(staubliTX60)
+project(staubli_tx60)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
 ## Find catkin macros and libraries
