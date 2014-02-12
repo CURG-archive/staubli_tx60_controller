@@ -1,7 +1,7 @@
 ; Auto-generated. Do not edit!
 
 
-(in-package staubliTX60-srv)
+(in-package staubli_tx60-srv)
 
 
 ;//! \htmlinclude GetCartesian-request.msg.html
@@ -18,7 +18,7 @@
 )
 (defmethod ros-datatype ((msg (eql '<GetCartesian-request>)))
   "Returns string type for a service object of type '<GetCartesian-request>"
-  "staubliTX60/GetCartesianRequest")
+  "staubli_tx60/GetCartesianRequest")
 (defmethod md5sum ((type (eql '<GetCartesian-request>)))
   "Returns md5sum for a message object of type '<GetCartesian-request>"
   "88d995302418aa13534aa14fc9aeed94")
@@ -189,7 +189,7 @@
 )
 (defmethod ros-datatype ((msg (eql '<GetCartesian-response>)))
   "Returns string type for a service object of type '<GetCartesian-response>"
-  "staubliTX60/GetCartesianResponse")
+  "staubli_tx60/GetCartesianResponse")
 (defmethod md5sum ((type (eql '<GetCartesian-response>)))
   "Returns md5sum for a message object of type '<GetCartesian-response>"
   "88d995302418aa13534aa14fc9aeed94")
@@ -221,4 +221,4 @@
   '<GetCartesian-response>)
 (defmethod ros-datatype ((msg (eql 'GetCartesian)))
   "Returns string type for a service object of type '<GetCartesian>"
-  "staubliTX60/GetCartesian")
+  "staubli_tx60/GetCartesian")

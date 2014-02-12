@@ -1,7 +1,7 @@
 
 (in-package :asdf)
 
-(defsystem "staubliTX60-srv"
+(defsystem "staubli_tx60-srv"
   :depends-on (:roslisp-msg-protocol :roslisp-utils)
   :components ((:file "_package")
     (:file "InvKinematics" :depends-on ("_package"))

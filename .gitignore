@@ -17,8 +17,8 @@ CMakeCache
 .so
 .hg
 roslib
-src/staubliTX60/srv
-src/staubliTX60/msg
+src/staubli_tx60/srv
+src/staubli_tx60/msg
 \#*
 *~
 lisp

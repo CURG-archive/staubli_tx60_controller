@@ -1,4 +1,4 @@
-(defpackage staubliTX60-srv
+(defpackage staubli_tx60-srv
   (:use cl
         roslisp-msg-protocol)
   (:export

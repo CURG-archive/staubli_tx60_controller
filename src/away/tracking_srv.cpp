@@ -1,11 +1,11 @@
 #include "ros/ros.h"
 #include <actionlib/client/simple_action_client.h>
-#include "staubliTX60/GetCartesian.h"
-#include "staubliTX60/GetJoints.h"
-#include "staubliTX60/SetJointsAction.h"
-#include "staubliTX60/SetCartesianAction.h"
-#include "staubliTX60/FwdKinematics.h"
-#include "staubliTX60/InvKinematics.h"
+#include "staubli_tx60/GetCartesian.h"
+#include "staubli_tx60/GetJoints.h"
+#include "staubli_tx60/SetJointsAction.h"
+#include "staubli_tx60/SetCartesianAction.h"
+#include "staubli_tx60/FwdKinematics.h"
+#include "staubli_tx60/InvKinematics.h"
 #include <stdio.h>
 #include <sys/types.h>
 #include <fcntl.h>
@@ -14,10 +14,10 @@ void wave() {
    double x,y,z,rx,ry,rz;
    int lineCtrl;
 
-   actionlib::SimpleActionClient<staubliTX60::SetCartesianAction> ac("setCartesian", true);
+   actionlib::SimpleActionClient<staubli_tx60::SetCartesianAction> ac("setCartesian", true);
    ROS_INFO("Waiting for action server to start.");
    ac.waitForServer(); //will wait for infinite time
-   staubliTX60::SetCartesianGoal goal;
+   staubli_tx60::SetCartesianGoal goal;
 
    int tem = fcntl(0, F_GETFL, 0);
    fcntl (0, F_SETFL, (tem | O_NDELAY));

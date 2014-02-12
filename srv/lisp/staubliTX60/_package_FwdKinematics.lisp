@@ -1,4 +1,4 @@
-(in-package staubliTX60-srv)
+(in-package staubli_tx60-srv)
 (export '(J-VAL
           X-VAL
           Y-VAL

@@ -1,17 +1,17 @@
 #include "TX60L.h"
 #include "ros/ros.h"
 #include <actionlib/server/simple_action_server.h>
-#include "staubliTX60/GetCartesian.h"
-#include "staubliTX60/GetJoints.h"
-#include "staubliTX60/GetRotMat.h"
-#include "staubliTX60/FwdKinematics.h"
-#include "staubliTX60/InvKinematics.h"
-#include "staubliTX60/SetJointsAction.h"
-#include "staubliTX60/SetCartesianAction.h"
-#include "staubliTX60/SetJointTrajectoryAction.h"
-#include "staubliTX60/SetJointTrajectoryGoal.h"
-#include "staubliTX60/JointTrajectoryPoint.h"
-#include "staubliTX60/ResetMotion.h"
+#include "staubli_tx60/GetCartesian.h"
+#include "staubli_tx60/GetJoints.h"
+#include "staubli_tx60/GetRotMat.h"
+#include "staubli_tx60/FwdKinematics.h"
+#include "staubli_tx60/InvKinematics.h"
+#include "staubli_tx60/SetJointsAction.h"
+#include "staubli_tx60/SetCartesianAction.h"
+#include "staubli_tx60/SetJointTrajectoryAction.h"
+#include "staubli_tx60/SetJointTrajectoryGoal.h"
+#include "staubli_tx60/JointTrajectoryPoint.h"
+#include "staubli_tx60/ResetMotion.h"
 #include <cstring>
 #include <vector>
 #include <cmath>
@@ -33,8 +33,8 @@ TX60L staubli;
 const double ERROR_EPSILON = 1E-4;
 const size_t CONTROL_FREQ  = 20;
 
-bool cancelMotion(staubliTX60::ResetMotion::Request & req,
-		  staubliTX60::ResetMotion::Response & res){
+bool cancelMotion(staubli_tx60::ResetMotion::Request & req,
+		  staubli_tx60::ResetMotion::Response & res){
   staubli.ResetMotion();
   res.succeeded = true;
   return true;
@@ -42,8 +42,8 @@ bool cancelMotion(staubliTX60::ResetMotion::Request & req,
 
 }
 
-bool getCartesian(staubliTX60::GetCartesian::Request  &req,
-      staubliTX60::GetCartesian::Response &res ) {
+bool getCartesian(staubli_tx60::GetCartesian::Request  &req,
+      staubli_tx60::GetCartesian::Response &res ) {
 
    std::vector<double> position;
    position.resize(6);
@@ -69,8 +69,8 @@ bool getCartesian(staubliTX60::GetCartesian::Request  &req,
    }
 }
 
-bool getRotMat(staubliTX60::GetRotMat::Request  &req,
-      staubliTX60::GetRotMat::Response &res ) {
+bool getRotMat(staubli_tx60::GetRotMat::Request  &req,
+      staubli_tx60::GetRotMat::Response &res ) {
    std::vector<double> position;
    position.resize(6);
    if(staubli.GetRobotCartesianPosition(position)){
@@ -89,8 +89,8 @@ bool getRotMat(staubliTX60::GetRotMat::Request  &req,
    }
 }
 
-bool getJoints(staubliTX60::GetJoints::Request  &req,
-      staubliTX60::GetJoints::Response &res ) {
+bool getJoints(staubli_tx60::GetJoints::Request  &req,
+      staubli_tx60::GetJoints::Response &res ) {
    std::vector<double> joints;
    joints.resize(6);
    if(staubli.GetRobotJoints(joints)){
@@ -103,8 +103,8 @@ bool getJoints(staubliTX60::GetJoints::Request  &req,
    }
 }
 
-bool fwdKinematics(staubliTX60::FwdKinematics::Request  &req,
-      staubliTX60::FwdKinematics::Response &res ) {
+bool fwdKinematics(staubli_tx60::FwdKinematics::Request  &req,
+      staubli_tx60::FwdKinematics::Response &res ) {
    std::vector<double> pos;
    if(staubli.ForwardKinematics( req.j, pos )){
       res.x  =  (double) pos[0];
@@ -140,8 +140,8 @@ bool invKinematics2( std::vector<double> &targetPos,
    return false;
 }
 
-bool invKinematics(staubliTX60::InvKinematics::Request  &req,
-      staubliTX60::InvKinematics::Response &res ) {
+bool invKinematics(staubli_tx60::InvKinematics::Request  &req,
+      staubli_tx60::InvKinematics::Response &res ) {
    std::vector<double> targetPos, j;
    targetPos.push_back( (double) req.x  );
    targetPos.push_back( (double) req.y  );
@@ -162,11 +162,11 @@ bool invKinematics(staubliTX60::InvKinematics::Request  &req,
 class SetJointsAction{
    protected:
       ros::NodeHandle nh_;
-      actionlib::SimpleActionServer<staubliTX60::SetJointsAction> as_;
+      actionlib::SimpleActionServer<staubli_tx60::SetJointsAction> as_;
       std::string action_name_;
       // create messages that are used to published feedback/result
-      staubliTX60::SetJointsFeedback feedback_;
-      staubliTX60::SetJointsResult result_;
+      staubli_tx60::SetJointsFeedback feedback_;
+      staubli_tx60::SetJointsResult result_;
 
    public:
       SetJointsAction(std::string name) :
@@ -189,7 +189,7 @@ class SetJointsAction{
 	 }
       }
 
-      void setJointsCB( const staubliTX60::SetJointsGoalConstPtr &goal ) {
+      void setJointsCB( const staubli_tx60::SetJointsGoalConstPtr &goal ) {
 	 //staubli.ResetMotion();
 	 ros::Rate rate(10);
 	 bool success = true;
@@ -229,11 +229,11 @@ class SetJointsAction{
 class SetJointTrajectoryAction{
    protected:
       ros::NodeHandle nh_;
-      actionlib::SimpleActionServer<staubliTX60::SetJointTrajectoryAction> as_;
+      actionlib::SimpleActionServer<staubli_tx60::SetJointTrajectoryAction> as_;
       std::string action_name_;
       // create messages that are used to published feedback/result
-      staubliTX60::SetJointTrajectoryFeedback feedback_;
-      staubliTX60::SetJointTrajectoryResult result_;
+      staubli_tx60::SetJointTrajectoryFeedback feedback_;
+      staubli_tx60::SetJointTrajectoryResult result_;
   
    public:
       SetJointTrajectoryAction(std::string name) :
@@ -283,7 +283,7 @@ class SetJointTrajectoryAction{
 	 }
       }
 
-      void setJointTrajectoryCB( const staubliTX60::SetJointTrajectoryGoalConstPtr &goal ) 
+      void setJointTrajectoryCB( const staubli_tx60::SetJointTrajectoryGoalConstPtr &goal ) 
       {
 	 //staubli.ResetMotion();
 	 ros::Rate rate(10);
@@ -292,7 +292,7 @@ class SetJointTrajectoryAction{
 	 staubli.ResetMotion();
 	 //ROS_ERROR("staubli:: Recieved goal");
 	 //For simple action servers, previous goals stop being tracked, the robot shoud
-	 BOOST_FOREACH(const staubliTX60::JointTrajectoryPoint &jointGoal,  goal->jointTrajectory){
+	 BOOST_FOREACH(const staubli_tx60::JointTrajectoryPoint &jointGoal,  goal->jointTrajectory){
 	   //ROS_ERROR("movementType: %d, jointV: %lf, acc: %lf, dacc: %lf", jointGoal.params.jointVelocity, jointGoal.params.movementType, jointGoal.params.jointAcc, jointGoal.params.jointDec);
 	   /*	   if( !staubli.MoveJoints(jointGoal.jointValues,
 				   jointGoal.params.movementType,
@@ -351,11 +351,11 @@ class SetJointTrajectoryAction{
 class SetCartesianAction{
    protected:
       ros::NodeHandle nh_;
-      actionlib::SimpleActionServer<staubliTX60::SetCartesianAction> as_;
+      actionlib::SimpleActionServer<staubli_tx60::SetCartesianAction> as_;
       std::string action_name_;
       // create messages that are used to published feedback/result
-      staubliTX60::SetCartesianFeedback feedback_;
-      staubliTX60::SetCartesianResult result_;
+      staubli_tx60::SetCartesianFeedback feedback_;
+      staubli_tx60::SetCartesianResult result_;
 
    public:
       SetCartesianAction(std::string name) :
@@ -389,7 +389,7 @@ class SetCartesianAction{
 	 }
       }
 
-      void setCartesianCB( const staubliTX60::SetCartesianGoalConstPtr &goalPtr ) {
+      void setCartesianCB( const staubli_tx60::SetCartesianGoalConstPtr &goalPtr ) {
 	 ros::Rate rate(10);
 	 bool success = true;
 	 std::vector<double> goal, goalJoints;
@@ -448,15 +448,15 @@ int main(int argc, char **argv)
 {
    if ( argc<2 || (strstr(argv[1],"http://")!=argv[1]) || !strstr(argv[1],":5653/") ) {
       ROS_ERROR( "Wrong command line arguments\n"
-	    "Usage: staubliTX60_server Staubli_CS8_IP\n"
-	    "Ex:    rosrun staubliTX60 staubliTX60_server \"http://192.168.11.xxx:5653/\"");
+	    "Usage: staubli_tx60_server Staubli_CS8_IP\n"
+	    "Ex:    rosrun staubli_tx60 staubli_tx60_server \"http://192.168.11.xxx:5653/\"");
       return 1;
    }
 
    if( staubli.Login( argv[1], "default", "") ){
       staubli.Power(true);
       ROS_INFO("Connected to Staubli CS8 Controller.");
-      ros::init(argc, argv, "staubliTX60_server");
+      ros::init(argc, argv, "staubli_tx60_server");
       ros::NodeHandle n;
 
       ros::ServiceServer srv_getCartesian,  srv_getJoints; 

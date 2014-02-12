@@ -1,7 +1,7 @@
 ; Auto-generated. Do not edit!
 
 
-(in-package staubliTX60-srv)
+(in-package staubli_tx60-srv)
 
 
 ;//! \htmlinclude GetRotMat-request.msg.html
@@ -18,7 +18,7 @@
 )
 (defmethod ros-datatype ((msg (eql '<GetRotMat-request>)))
   "Returns string type for a service object of type '<GetRotMat-request>"
-  "staubliTX60/GetRotMatRequest")
+  "staubli_tx60/GetRotMatRequest")
 (defmethod md5sum ((type (eql '<GetRotMat-request>)))
   "Returns md5sum for a message object of type '<GetRotMat-request>"
   "1f7818e7ce16454badf1bee936b0ff16")
@@ -83,7 +83,7 @@
 )
 (defmethod ros-datatype ((msg (eql '<GetRotMat-response>)))
   "Returns string type for a service object of type '<GetRotMat-response>"
-  "staubliTX60/GetRotMatResponse")
+  "staubli_tx60/GetRotMatResponse")
 (defmethod md5sum ((type (eql '<GetRotMat-response>)))
   "Returns md5sum for a message object of type '<GetRotMat-response>"
   "1f7818e7ce16454badf1bee936b0ff16")
@@ -105,4 +105,4 @@
   '<GetRotMat-response>)
 (defmethod ros-datatype ((msg (eql 'GetRotMat)))
   "Returns string type for a service object of type '<GetRotMat>"
-  "staubliTX60/GetRotMat")
+  "staubli_tx60/GetRotMat")

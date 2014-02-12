@@ -1,7 +1,7 @@
 ; Auto-generated. Do not edit!
 
 
-(in-package staubliTX60-srv)
+(in-package staubli_tx60-srv)
 
 
 ;//! \htmlinclude InvKinematics-request.msg.html
@@ -161,7 +161,7 @@
 )
 (defmethod ros-datatype ((msg (eql '<InvKinematics-request>)))
   "Returns string type for a service object of type '<InvKinematics-request>"
-  "staubliTX60/InvKinematicsRequest")
+  "staubli_tx60/InvKinematicsRequest")
 (defmethod md5sum ((type (eql '<InvKinematics-request>)))
   "Returns md5sum for a message object of type '<InvKinematics-request>"
   "67595675823d506b00f163740b4f2c36")
@@ -238,7 +238,7 @@
 )
 (defmethod ros-datatype ((msg (eql '<InvKinematics-response>)))
   "Returns string type for a service object of type '<InvKinematics-response>"
-  "staubliTX60/InvKinematicsResponse")
+  "staubli_tx60/InvKinematicsResponse")
 (defmethod md5sum ((type (eql '<InvKinematics-response>)))
   "Returns md5sum for a message object of type '<InvKinematics-response>"
   "67595675823d506b00f163740b4f2c36")
@@ -260,4 +260,4 @@
   '<InvKinematics-response>)
 (defmethod ros-datatype ((msg (eql 'InvKinematics)))
   "Returns string type for a service object of type '<InvKinematics>"
-  "staubliTX60/InvKinematics")
+  "staubli_tx60/InvKinematics")

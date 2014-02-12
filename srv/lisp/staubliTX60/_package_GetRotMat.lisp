@@ -1,3 +1,3 @@
-(in-package staubliTX60-srv)
+(in-package staubli_tx60-srv)
 (export '(M-VAL
 ))

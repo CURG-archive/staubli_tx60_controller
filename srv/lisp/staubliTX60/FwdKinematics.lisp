@@ -1,7 +1,7 @@
 ; Auto-generated. Do not edit!
 
 
-(in-package staubliTX60-srv)
+(in-package staubli_tx60-srv)
 
 
 ;//! \htmlinclude FwdKinematics-request.msg.html
@@ -55,7 +55,7 @@
 )
 (defmethod ros-datatype ((msg (eql '<FwdKinematics-request>)))
   "Returns string type for a service object of type '<FwdKinematics-request>"
-  "staubliTX60/FwdKinematicsRequest")
+  "staubli_tx60/FwdKinematicsRequest")
 (defmethod md5sum ((type (eql '<FwdKinematics-request>)))
   "Returns md5sum for a message object of type '<FwdKinematics-request>"
   "f0d139f661446e7d7135f7b047802a5c")
@@ -228,7 +228,7 @@
 )
 (defmethod ros-datatype ((msg (eql '<FwdKinematics-response>)))
   "Returns string type for a service object of type '<FwdKinematics-response>"
-  "staubliTX60/FwdKinematicsResponse")
+  "staubli_tx60/FwdKinematicsResponse")
 (defmethod md5sum ((type (eql '<FwdKinematics-response>)))
   "Returns md5sum for a message object of type '<FwdKinematics-response>"
   "f0d139f661446e7d7135f7b047802a5c")
@@ -260,4 +260,4 @@
   '<FwdKinematics-response>)
 (defmethod ros-datatype ((msg (eql 'FwdKinematics)))
   "Returns string type for a service object of type '<FwdKinematics>"
-  "staubliTX60/FwdKinematics")
+  "staubli_tx60/FwdKinematics")

@@ -1,7 +1,7 @@
 ; Auto-generated. Do not edit!
 
 
-(in-package staubliTX60-srv)
+(in-package staubli_tx60-srv)
 
 
 ;//! \htmlinclude GetJoints-request.msg.html
@@ -18,7 +18,7 @@
 )
 (defmethod ros-datatype ((msg (eql '<GetJoints-request>)))
   "Returns string type for a service object of type '<GetJoints-request>"
-  "staubliTX60/GetJointsRequest")
+  "staubli_tx60/GetJointsRequest")
 (defmethod md5sum ((type (eql '<GetJoints-request>)))
   "Returns md5sum for a message object of type '<GetJoints-request>"
   "59542e81b1fd2eaee58892b9055022e8")
@@ -83,7 +83,7 @@
 )
 (defmethod ros-datatype ((msg (eql '<GetJoints-response>)))
   "Returns string type for a service object of type '<GetJoints-response>"
-  "staubliTX60/GetJointsResponse")
+  "staubli_tx60/GetJointsResponse")
 (defmethod md5sum ((type (eql '<GetJoints-response>)))
   "Returns md5sum for a message object of type '<GetJoints-response>"
   "59542e81b1fd2eaee58892b9055022e8")
@@ -105,4 +105,4 @@
   '<GetJoints-response>)
 (defmethod ros-datatype ((msg (eql 'GetJoints)))
   "Returns string type for a service object of type '<GetJoints>"
-  "staubliTX60/GetJoints")
+  "staubli_tx60/GetJoints")
