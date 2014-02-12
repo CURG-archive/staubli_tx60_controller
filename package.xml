@@ -1,7 +1,7 @@
 <package>
-  <name>staubliTX60</name>
+  <name>staubli_tx60</name>
   <version>1.0.0</version>
-  <description>staubliTX60</description>
+  <description>staubli_tx60</description>
   <author>Wei-Chun Yuan</author>
   <maintainer email="jvarley@cs.columbia.edu">Jake Varley</maintainer>
   <license>BSD</license>

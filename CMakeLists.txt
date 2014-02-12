@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 2.4.6)
-project(staubli_tx60
-#1919A3
-location)
+project(staubli_tx60)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
 ## Find catkin macros and libraries
@@ -103,70 +101,32 @@ include_directories(include  ${catkin_INCLUDE_DIRS})
 
 
 #common commands for building c++ executables and libraries
-add_library(soapC src/staubli_tx60
-#1919A3
-location_api/soapC.cpp)
-add_library(Server0 src/staubli_tx60
-#1919A3
-location_api/soapCS8ServerV0Proxy.cpp)
-add_library(Server1 src/staubli_tx60
-#1919A3
-location_api/soapCS8ServerV1Proxy.cpp)
-add_library(Server3 src/staubli_tx60
-#1919A3
-location_api/soapCS8ServerV3Proxy.cpp)
-add_library(stdsoap2 src/staubli_tx60
-#1919A3
-location_api/stdsoap2.cpp)
-add_library(tx60l src/staubli_tx60
-#1919A3
-location_api/TX60L.cpp)
+add_library(soapC src/staubli_tx60_api/soapC.cpp)
+add_library(Server0 src/staubli_tx60_api/soapCS8ServerV0Proxy.cpp)
+add_library(Server1 src/staubli_tx60_api/soapCS8ServerV1Proxy.cpp)
+add_library(Server3 src/staubli_tx60_api/soapCS8ServerV3Proxy.cpp)
+add_library(stdsoap2 src/staubli_tx60_api/stdsoap2.cpp)
+add_library(tx60l src/staubli_tx60_api/TX60L.cpp)
 
-add_executable(staubli_tx60
-#1919A3
-location_server src/staubli_tx60
-#1919A3
-location_server.cpp)
-target_link_libraries(staubli_tx60
-#1919A3
-location_server ${catkin_LIBRARIES})
-add_dependencies(staubli_tx60
-#1919A3
-location_server staubli_tx60
-#1919A3
-location_generate_messages_cpp)
+add_executable(staubli_tx60_server src/staubli_tx60_server.cpp)
+target_link_libraries(staubli_tx60_server ${catkin_LIBRARIES})
+add_dependencies(staubli_tx60_server staubli_tx60_generate_messages_cpp)
 
 add_executable(testing_client src/testing_client.cpp)
 target_link_libraries(testing_client ${catkin_LIBRARIES})
-add_dependencies(testing_client staubli_tx60
-#1919A3
-location_generate_messages_cpp)
+add_dependencies(testing_client staubli_tx60_generate_messages_cpp)
 
 add_executable(wave src/wave.cpp)
 target_link_libraries(wave ${catkin_LIBRARIES})
-add_dependencies(wave staubli_tx60
-#1919A3
-location_generate_messages_cpp)
+add_dependencies(wave staubli_tx60_generate_messages_cpp)
 
 
-target_link_libraries(staubli_tx60
-#1919A3
-location_server tx60l)
-target_link_libraries(staubli_tx60
-#1919A3
-location_server soapC)
-target_link_libraries(staubli_tx60
-#1919A3
-location_server Server0)
-target_link_libraries(staubli_tx60
-#1919A3
-location_server Server1)
-target_link_libraries(staubli_tx60
-#1919A3
-location_server Server3)
-target_link_libraries(staubli_tx60
-#1919A3
-location_server stdsoap2)
+target_link_libraries(staubli_tx60_server tx60l)
+target_link_libraries(staubli_tx60_server soapC)
+target_link_libraries(staubli_tx60_server Server0)
+target_link_libraries(staubli_tx60_server Server1)
+target_link_libraries(staubli_tx60_server Server3)
+target_link_libraries(staubli_tx60_server stdsoap2)
 
 
 
