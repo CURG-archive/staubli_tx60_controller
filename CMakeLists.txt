@@ -12,8 +12,8 @@ find_package(catkin REQUIRED COMPONENTS std_msgs actionlib_msgs message_generati
 
 include_directories(
     ./srv
-	./src
-	./action
+    ./src
+    ./action
 )
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -45,20 +45,6 @@ include_directories(
  add_message_files(
    FILES
    JointTrajectoryPoint.msg
-   #SetCartesianAction.msg
-   #SetCartesianActionFeedback.msg
-   #SetCartesianActionGoal.msg
-   #SetCartesianActionResult.msg
-   #SetCartesianFeedback.msg
-   #SetCartesianGoal.msg
-   #SetCartesianResult.msg
-   #SetJointsAction.msg
-   #SetJointsActionFeedback.msg
-   #SetJointsActionGoal.msg
-   #SetJointsActionResult.msg
-   #SetJointsFeedback.msg
-   #SetJointsGoal.msg
-   #SetJointsResult.msg
    StaubliMovementParams.msg
  )
 
@@ -95,18 +81,11 @@ catkin_package(
 #  DEPENDS  
 )
 
+add_subdirectory(./staubli_tx60_api)
+
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(include  include/staubli_tx60_api ${catkin_INCLUDE_DIRS})
-
-
-#common commands for building c++ executables and libraries
-add_library(soapC src/staubli_tx60_api/soapC.cpp)
-add_library(Server0 src/staubli_tx60_api/soapCS8ServerV0Proxy.cpp)
-add_library(Server1 src/staubli_tx60_api/soapCS8ServerV1Proxy.cpp)
-add_library(Server3 src/staubli_tx60_api/soapCS8ServerV3Proxy.cpp)
-add_library(stdsoap2 src/staubli_tx60_api/stdsoap2.cpp)
-add_library(tx60l src/staubli_tx60_api/TX60L.cpp)
+include_directories(include staubli_tx60_api/include ${catkin_INCLUDE_DIRS})
 
 add_executable(staubli_tx60_server src/staubli_tx60_server.cpp)
 target_link_libraries(staubli_tx60_server ${catkin_LIBRARIES})
