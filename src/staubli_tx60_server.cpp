@@ -12,6 +12,7 @@
 #include "staubli_tx60/SetJointTrajectoryGoal.h"
 #include "staubli_tx60/JointTrajectoryPoint.h"
 #include "staubli_tx60/ResetMotion.h"
+#include "std_msgs/String.h"
 #include <cstring>
 #include <vector>
 #include <cmath>
@@ -23,15 +24,189 @@
 
 #include <boost/foreach.hpp>
 
+#include "sensor_msgs/JointState.h"
 
-
-
-
-
+std::vector<double> lastJointValues;
 TX60L staubli;
 
 const double ERROR_EPSILON = 1E-4;
 const size_t CONTROL_FREQ  = 20;
+
+
+
+class StaubliActionManager
+{
+protected:
+    ros::Publisher activeActionCancelledPub;
+    ros::Subscriber activeActionCancelledSub;
+    ros::NodeHandle nh_;
+    std::string actionName_;
+    bool running;
+    /*@brief activate the current action - set to running and cancel everyone else
+     *
+     */
+    void activateAction()
+    {
+        activeActionCancelledPub.publish(actionName_);
+        running = true;
+    }
+
+public:
+    StaubliActionManager(std::string & name) : name_(name)
+    {
+        activeActionCancelledPub = nh_.advertise<std_msgs::String>("StaubliActionCancelled", 10 );
+        activeActionCancelledSub = nh_.subscribe("StaubliActionCancelled", actionCancelledCB, 10);
+    }
+
+
+    virtual void actionCancelledCB(std_msgs::StringConstPtr & msg){
+
+        if(running && !actionName_.compare(msg->data))
+        {
+            cancelAction();
+            running = false;
+        }
+    }
+    virtual void cancelAction() = 0;
+};
+
+
+template <class ActionType>
+class JointActionManager : public StaubliActionManager
+{
+
+protected:
+   actionlib::SimpleActionServer<ActionType> as_;
+   actionlib::SimpleActionServer<ActionType>::_result_type result_;
+   actionlib::SimpleActionServer<ActionType>::_feedback_type feedback_;
+   std::vector<double> goal_values_;
+
+   /*@brief abortHard - Abort the current job and shut down the node.
+    *
+    *
+    */
+
+   bool abortHard()
+   {
+       //unable to query robot state -- stop robot if possible, this is an important error
+        ROS_ERROR(actionName_ + "::Communications Failure! Error when determining end of movement. *****  All goals cancelled and robot queue reset.  Staubli Server shutdown!!!");
+
+        as_.setAborted(result_,"Communications failure - could not query joint position\n");
+        //communication failures are bad.
+        //Shut down the action server if they occur.  Don't accept new goals.
+        as_.shutdown();
+        //Cancel existing motion of robot if possible
+        staubli.ResetMotion();
+        //kill entire server
+        ros::shutdown();
+        return true;
+   }
+
+   /* @pollGoal - Test if the goal is still running
+    *
+    */
+   bool pollGoal(const std::vector<double> &goal_joints)
+   {
+       return(ros::ok() && as_.isActive() && pollRobot(goal_joints));
+   }
+
+   virtual void cancelAction()
+   {
+       if(as_.isActive()){
+           result_.status = PREEMPTED;
+           staubli.ResetMotion();
+           as_.setPreempted(result_,"Action preempted by another action");
+       }
+   }
+
+   /*@brief pollRobot - Test if the robot has reached its goal
+    *
+    *@param goal_joints - Vector of goal positions
+    *
+    *@returns whether the goal is still in progress
+    */
+
+   bool pollRobot( const std::vector<double> &goal_joints) {
+       std::vector<double> j2(lastJointValues);
+       if(staubli.IsWorking())
+       {
+           //Calculate feedback
+           feedback_.j = j2;
+           as_.publishFeedback(feedback_);
+           double error = fabs(goal_joints[0]-j2[0])+ fabs(goal_joints[1]-j2[1])+ fabs(goal_joints[2]-j2[2])+
+                   fabs(goal_joints[3]-j2[3])+ fabs(goal_joints[4]-j2[4])+ fabs(goal_joints[5]-j2[5]);
+
+           //Check if we have stopped moving
+           if ( staubli.IsJointQueueEmpty() && staubli.IsRobotSettled())
+           {
+               result_.j = j2;
+               //Check if we are close enough to our goal
+               if( error >= ERROR_EPSILON )
+               {
+                   //Something emptied the joint goal queue, but the goal was not reached
+                   as_.setAborted(result_);
+                   ROS_WARN(actionName_ + ":: Staubli queue emptied prematurely\n");
+
+               }
+               else
+               {
+                   as_.setSucceeded(result_);
+                   ROS_INFO(actionName_ + "GOAL Reached");
+                   //Hurray, we have reached our goal!
+               }
+               return true;
+           }
+           else // We are still moving and everything is ok
+           {
+               return false;
+           }
+
+       }
+
+      else {
+           abortHard();
+           return true;
+       }
+       return true;
+   }
+
+public:
+   JointActionManager(const std::string & actionName, const std::string & actionTopic, double spinRate = 10) : StaubliActionManager (actionName),
+       as_(nh_, actionTopic, boost::bind(&actionCallback, this, _1))
+   {
+   }
+
+   virtual void sendGoal() = 0;
+
+   void actionCallback(const ActionType::goal_type_::ConstPtr &goal)
+   {
+       goal_ = *goal;
+       if(sendGoal())
+       {
+           as_.acceptNewGoal(goal_);
+           running = true;
+       }
+   }
+
+   void runFeedback()
+   {
+       if(running)
+           if(as_.isActive())
+               running = pollGoal(goal_values_);
+       else
+           {
+               //This shouldn't happen
+               if(as_.isActive())
+               {
+                   ROS_ERROR(actionName_ + " is active, but not set to running!");
+               }
+           }
+   }
+};
+
+
+
+
 
 bool cancelMotion(staubli_tx60::ResetMotion::Request & req,
 		  staubli_tx60::ResetMotion::Response & res){
@@ -234,6 +409,7 @@ class SetJointTrajectoryAction{
       // create messages that are used to published feedback/result
       staubli_tx60::SetJointTrajectoryFeedback feedback_;
       staubli_tx60::SetJointTrajectoryResult result_;
+
   
    public:
       SetJointTrajectoryAction(std::string name) :
@@ -446,7 +622,15 @@ class SetCartesianAction{
 
 int main(int argc, char **argv)
 {
-   if ( argc<2 || (strstr(argv[1],"http://")!=argv[1]) || !strstr(argv[1],":5653/") ) {
+
+    lastJointValues.assign(6,NaN);
+    char * defaultJointNames[] = {"joint_1","joint_2", "joint_3", "joint_4", "joint_5","joint_6"};
+
+    std::vector<std::string> > jointNames(defaultJointNames[0], defaultJointNames[6]);
+
+
+
+    if ( argc<2 || (strstr(argv[1],"http://")!=argv[1]) || !strstr(argv[1],":5653/") ) {
       ROS_ERROR( "Wrong command line arguments\n"
 	    "Usage: staubli_tx60_server Staubli_CS8_IP\n"
 	    "Ex:    rosrun staubli_tx60 staubli_tx60_server \"http://192.168.11.xxx:5653/\"");
@@ -458,6 +642,15 @@ int main(int argc, char **argv)
       ROS_INFO("Connected to Staubli CS8 Controller.");
       ros::init(argc, argv, "staubli_tx60_server");
       ros::NodeHandle n;
+
+      //set loop rate
+      double rate;
+      n.getParam("rate", &rate, 10);
+      ros::Rate loop_rate(rate);
+
+      //set joint names
+      if(n.hasParam("staubli_joint_names"))
+          n.getParam("staubli_joint_names",jointNames);
 
       ros::ServiceServer srv_getCartesian,  srv_getJoints; 
       ros::ServiceServer srv_fwdKinematics, srv_invKinematics; 
@@ -475,6 +668,8 @@ int main(int argc, char **argv)
 	 ROS_INFO("Srv up: get staubli's inverse kinematics.");
       if( srv_invKinematics= n.advertiseService("cancelMotion", cancelMotion))
 	 ROS_INFO("Srv up: cancel motion.");
+
+
       SetJointsAction setJointsAction   ("setJoints");
       ROS_INFO("Srv up: set staubli's joints' configuration.");
       SetJointTrajectoryAction setJointTrajectoryAction   ("setJointTrajectory");
@@ -483,12 +678,30 @@ int main(int argc, char **argv)
       ROS_INFO("Srv up: set staubli's Cartesian pos.");
 
 
+      //create joint publisher
+      ros::Publisher joints_pub = n.advertise<sensor_msgs::JointState>("joints", 10);
+
+
       ROS_INFO("" );
       ROS_INFO("* * * * * * * * * * * * * * * * * * * * * * * * *");
       ROS_INFO("* MAKE SURE CS8 CONTROLLER IS IN NETWORKED MODE *");
       ROS_INFO("* * * * * * * * * * * * * * * * * * * * * * * * *");
+      sensor_msgs::JointState jointStateMsg;
+      while(ros::ok())
+      {
+          if(staubli.GetRobotJoints(lastJointValues))
+          {
+              jointStateMsg.name = jointNames;
+              jointStateMsg.position = lastJointValues;
+              joints_pub.publish(jointStateMsg);
+          }
+          if(!staubli.IsWorking())
+              ROS_ERROR("Staubli not logged in or last request failed");
 
-      ros::spin();
+          loop_rate.sleep();
+          ros::spinOnce();
+      }
+
       staubli.Power(false);
       staubli.Logoff();
    } else { 
