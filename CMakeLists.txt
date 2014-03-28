@@ -97,7 +97,7 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(include  ${catkin_INCLUDE_DIRS})
+include_directories(include  include/staubli_tx60_api ${catkin_INCLUDE_DIRS})
 
 
 #common commands for building c++ executables and libraries
