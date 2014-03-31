@@ -1,11 +1,14 @@
-class SetJointsAction{
+#ifndef SetJointsAction_H
+#define SetJointsAction_H
+
+#include "action_managers/staubliControlActionManager.h"
+
+class SetJointsAction: public StaubliControlActionManager
+{
    protected:
       ros::NodeHandle nh_;
       actionlib::SimpleActionServer<staubli_tx60::SetJointsAction> as_;
       std::string action_name_;
-      // create messages that are used to published feedback/result
-      staubli_tx60::SetJointsFeedback feedback_;
-      staubli_tx60::SetJointsResult result_;
 
    public:
       SetJointsAction(std::string name) :
@@ -64,3 +67,5 @@ class SetJointsAction{
 	 }
       }
 };
+
+#endif /* SetJointsAction_H */

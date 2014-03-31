@@ -26,9 +26,18 @@
 
 #include "sensor_msgs/JointState.h"
 
+#include "servicesManager.h"
+#include "staubliJointStatePublisher.h"
+
+#include "action_managers/setCartesianActionManager.h"
+
+//#include "action_managers/setJointsAction.h"
+//#include "action_managers/setJointTrajectoryAction.h"
 
 
-const double ERROR_EPSILON = 1E-4;
+
+
+
 const size_t CONTROL_FREQ  = 20;
 
 
@@ -38,20 +47,20 @@ class StaubliNode
         ros::NodeHandle node_handle;
 
         std::vector<double> lastJointValues;
-        std::vector<string> jointNames;
+        std::vector<std::string> jointNames;
         TX60L staubli;
 
         std::vector<StaubliActionManager> actionManagers;
         ServicesManager servicesManager;
         StaubliJointStatePublisher staubliJointStatePublisher;
 
-        bool isLoggedIn = false;
+        bool loggedIn;
 
         ros::Rate loop_rate;
 
     public:
         StaubliNode();
-        void login(string url);
+        void login(std::string url);
         bool isLoggedIn();
         void run();
 
@@ -60,21 +69,23 @@ class StaubliNode
 
 StaubliNode::StaubliNode():
     node_handle(""),
-    staubliJointStatePublisher(),
-    servicesManager(node_handle)
+    loggedIn(false),
+    staubliJointStatePublisher(node_handle),
+    servicesManager(node_handle),
+    loop_rate(10)
 {
-    actionManagers.push_back(setJointsAction("setJoints"));
-    actionManagers.push_back(setJointsAction("setJointTrajectory"));
-    actionManagers.push_back(setJointsAction("setCartesian"));
+//    actionManagers.push_back(setJointsAction("setJoints"));
+//    actionManagers.push_back(setJointTrajectoryAction("setJointTrajectory"));
+//    actionManagers.push_back(SetCartesianActionManager("setCartesian"));
 
-    double rate;
-    node_handle.getParam("rate", &rate, 10);
-    loop_rate(rate);
+    lastJointValues.assign(6,-1);
 
-    lastJointValues.assign(6,NaN);
-
-    char * defaultJointNames[] = {"joint_1","joint_2", "joint_3", "joint_4", "joint_5","joint_6"};
-    jointNames(defaultJointNames[0], defaultJointNames[6]);
+    jointNames.push_back("joint_1");
+    jointNames.push_back("joint_2");
+    jointNames.push_back("joint_3");
+    jointNames.push_back("joint_4");
+    jointNames.push_back("joint_5");
+    jointNames.push_back("joint_6");
 
     //set joint names
     if(node_handle.hasParam("staubli_joint_names"))
@@ -87,10 +98,10 @@ StaubliNode::StaubliNode():
     ROS_INFO("* * * * * * * * * * * * * * * * * * * * * * * * *");
 }
 
-void StaubliNode::login(string url)
+void StaubliNode::login(std::string url)
 {
-    isLoggedIn = staubli.Login( url, "default", "");
-    if(isLoggedIn)
+    loggedIn = staubli.Login( url, "default", "");
+    if(loggedIn)
     {
         ROS_INFO("Connected to Staubli CS8 Controller.");
     }
@@ -103,12 +114,12 @@ void StaubliNode::login(string url)
 
 bool StaubliNode::isLoggedIn()
 {
-    return isLoggedIn;
+    return loggedIn;
 }
 
 
 
-StaubliNode::run()
+void StaubliNode::run()
 {
     staubli.Power(true);
 

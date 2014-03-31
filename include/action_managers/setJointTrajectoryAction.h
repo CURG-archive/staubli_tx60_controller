@@ -1,4 +1,10 @@
-class SetJointTrajectoryAction{
+#ifndef SetJointTrajectoryAction_H
+#define SetJointTrajectoryAction_H
+
+#include "action_managers/staubliControlActionManager.h"
+
+class SetJointTrajectoryAction: public StaubliControlActionManager
+{
    protected:
       ros::NodeHandle nh_;
       actionlib::SimpleActionServer<staubli_tx60::SetJointTrajectoryAction> as_;
@@ -120,3 +126,6 @@ class SetJointTrajectoryAction{
       }
 
 };
+
+
+#endif /* SetJointTrajectoryAction_H */

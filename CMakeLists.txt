@@ -83,11 +83,26 @@ catkin_package(
 
 add_subdirectory(./staubli_tx60_api)
 
+SET(STAUBLI_TX60_SOURCE
+src/staubli_tx60_server.cpp
+src/servicesManager.cpp
+src/action_managers/setCartesianActionManager.cpp
+src/action_managers/staubliControlActionManager.cpp)
+
+SET(STAUBLI_TX60_HEADERS
+include/servicesManager.h
+include/staubliJointStatePublisher.h
+include/action_managers/setCartesianActionManager.h
+include/action_managers/staubliControlActionManager.h)
+
+
+
+
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(include staubli_tx60_api/include ${catkin_INCLUDE_DIRS})
 
-add_executable(staubli_tx60_server src/staubli_tx60_server.cpp)
+add_executable(staubli_tx60_server src/staubli_tx60_server.cpp ${STAUBLI_TX60_SOURCE} ${STAUBLI_TX60_HEADERS})
 target_link_libraries(staubli_tx60_server ${catkin_LIBRARIES})
 add_dependencies(staubli_tx60_server staubli_tx60_generate_messages_cpp)
 

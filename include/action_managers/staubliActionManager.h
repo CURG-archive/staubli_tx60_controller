@@ -1,3 +1,10 @@
+#ifndef StaubliActionManager_H
+#define StaubliActionManager_H
+
+#include <ros/node_handle.h>
+#include "TX60L.h"
+#include "std_msgs/String.h"
+
 class StaubliActionManager
 {
 protected:
@@ -5,25 +12,30 @@ protected:
     ros::Subscriber activeActionCancelledSub;
     ros::NodeHandle nh_;
     std::string actionName_;
+
+    TX60L staubli;
+
     bool running;
     /*@brief activate the current action - set to running and cancel everyone else
      *
      */
     void activateAction()
     {
-        activeActionCancelledPub.publish(actionName_);
+        std_msgs::StringPtr strMsg (new std_msgs::String);
+        strMsg->data = actionName_;
+        activeActionCancelledPub.publish(strMsg);
         running = true;
     }
 
 public:
-    StaubliActionManager(std::string & name) : name_(name)
+    StaubliActionManager(const std::string & name) : actionName_(name)
     {
         activeActionCancelledPub = nh_.advertise<std_msgs::String>("StaubliActionCancelled", 10 );
-        activeActionCancelledSub = nh_.subscribe("StaubliActionCancelled", actionCancelledCB, 10);
+        activeActionCancelledSub = nh_.subscribe("StaubliActionCancelled",10, &StaubliActionManager::actionCancelledCB, this);
     }
 
 
-    virtual void actionCancelledCB(std_msgs::StringConstPtr & msg){
+    virtual void actionCancelledCB(const std_msgs::StringConstPtr &msg){
 
         if(running && !actionName_.compare(msg->data))
         {
@@ -31,5 +43,8 @@ public:
             running = false;
         }
     }
+
     virtual void cancelAction() = 0;
 };
+
+#endif /* StaubliActionManager_H */

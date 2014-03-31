@@ -1,10 +1,15 @@
-class StaublieJointStatePublisher
+#ifndef StaubliJointStatePublisher_H
+#define StaubliJointStatePublisher_H
+
+class StaubliJointStatePublisher
 {
 	private:
 		ros::Publisher joints_pub;
 
 	public:
-		StaublieJointStatePublisher(ros::NodeHandle node_handle;);
-		publish(std::vector<double> lastJointValues);
+        StaubliJointStatePublisher(ros::NodeHandle node_handle);
+        void publish(std::vector<double> lastJointValues);
 
-}
+};
+
+#endif /* StaubliJointStatePublisher_H */

@@ -1,3 +1,10 @@
+#ifndef ServicesManager_H
+#define ServicesManager_H
+
+#include "ros/ros.h"
+#include "staubli_tx60/GetJointsResponse.h"
+#include "TX60L.h"
+
 class ServicesManager
 {
 private:
@@ -30,5 +37,8 @@ private:
 
 
 public:
-	ServicesManager();
-}
+    ServicesManager(ros::NodeHandle node_handle);
+};
+
+
+#endif /* ServicesManager_H */

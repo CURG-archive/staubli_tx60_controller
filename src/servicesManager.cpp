@@ -1,12 +1,14 @@
+#include "servicesManager.h"
 
-ServicesManager::ServicesManager()
+
+ServicesManager::ServicesManager(ros::NodeHandle node_handle)
 {
-    services.push_back(node_handle.advertiseService("getCartesian", &ServiceManager::getCartesian, this));
-    services.push_back(node_handle.advertiseService("getJoints",    &ServiceManager::getJoints,    this));
-    services.push_back(node_handle.advertiseService("getRotMat",    &ServiceManager::getRotMat,    this));
-    services.push_back(node_handle.advertiseService("fwdKinematics",&ServiceManager::fwdKinematics,this));
-    services.push_back(node_handle.advertiseService("invKinematics",&ServiceManager::invKinematics,this));
-    services.push_back(node_handle.advertiseService("cancelMotion", &ServiceManager::cancelMotion, this));
+    services.push_back(node_handle.advertiseService("getCartesian", &ServicesManager::getCartesian, this));
+    services.push_back(node_handle.advertiseService("getJoints",    &ServicesManager::getJoints,    this));
+    services.push_back(node_handle.advertiseService("getRotMat",    &ServicesManager::getRotMat,    this));
+    services.push_back(node_handle.advertiseService("fwdKinematics",&ServicesManager::fwdKinematics,this));
+    services.push_back(node_handle.advertiseService("invKinematics",&ServicesManager::invKinematics,this));
+    services.push_back(node_handle.advertiseService("cancelMotion", &ServicesManager::cancelMotion, this));
 }
 
 bool ServicesManager::cancelMotionCB(staubli_tx60::ResetMotion::Request & req,
