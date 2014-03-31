@@ -3,6 +3,12 @@
 
 #include "ros/ros.h"
 #include "staubli_tx60/GetJointsResponse.h"
+#include "staubli_tx60/ResetMotion.h"
+#include "staubli_tx60/GetCartesian.h"
+#include "staubli_tx60/GetRotMat.h"
+#include "staubli_tx60/GetJoints.h"
+#include "staubli_tx60/FwdKinematics.h"
+#include "staubli_tx60/InvKinematics.h"
 #include "TX60L.h"
 
 class ServicesManager
@@ -10,6 +16,7 @@ class ServicesManager
 private:
 	ros::NodeHandle node_handle;
 	std::vector<ros::ServiceServer> services;
+    TX60L staubli;
 
 	//service callbacks
 	bool cancelMotionCB(staubli_tx60::ResetMotion::Request & req,
@@ -37,7 +44,7 @@ private:
 
 
 public:
-    ServicesManager(ros::NodeHandle node_handle);
+    ServicesManager(ros::NodeHandle node_handle, TX60L staubli);
 };
 
 

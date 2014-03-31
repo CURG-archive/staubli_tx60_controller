@@ -86,14 +86,15 @@ add_subdirectory(./staubli_tx60_api)
 SET(STAUBLI_TX60_SOURCE
 src/staubli_tx60_server.cpp
 src/servicesManager.cpp
-src/action_managers/setCartesianActionManager.cpp
-src/action_managers/staubliControlActionManager.cpp)
+src/action_managers/setCartesianActionManager.cpp)
+#)
 
 SET(STAUBLI_TX60_HEADERS
 include/servicesManager.h
 include/staubliJointStatePublisher.h
 include/action_managers/setCartesianActionManager.h
-include/action_managers/staubliControlActionManager.h)
+include/action_managers/staubliControlActionManager.h
+include/action_managers/staubliControlActionManager.hpp)
 
 
 

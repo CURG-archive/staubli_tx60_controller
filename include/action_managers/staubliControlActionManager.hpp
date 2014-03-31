@@ -1,16 +1,14 @@
-#include "action_managers/staubliControlActionManager.h"
 
-StaubliControlActionManager::StaubliControlActionManager()
-{
+#define ERROR_EPSILON .1
 
-}
-
-bool StaubliControlActionManager::abortHard()
+template <class ActionType, class FeedbackType, class ResultType,  class GoalType>
+bool
+StaubliControlActionManager <ActionType, FeedbackType, ResultType, GoalType>::abortHard()
 {
     //unable to query robot state -- stop robot if possible, this is an important error
     ROS_ERROR(actionName_ + "::Communications Failure! Error when determining end of movement. *****  All goals cancelled and robot queue reset.  Staubli Server shutdown!!!");
 
-    as_.setAborted(result_,"Communications failure - could not query joint position\n");
+    as_.setAborted(mResult,"Communications failure - could not query joint position\n");
     //communication failures are bad.
     //Shut down the action server if they occur.  Don't accept new goals.
     as_.shutdown();
@@ -21,42 +19,43 @@ bool StaubliControlActionManager::abortHard()
     return true;
 }
 
-void StaubliControlActionManager::cancelAction()
+template <class ActionType, class FeedbackType, class ResultType,  class GoalType>
+void StaubliControlActionManager<ActionType, FeedbackType, ResultType, GoalType>::cancelAction()
 {
     if(as_.isActive()){
-        mResult.status = PREEMPTED;
+        mResult.status = ResultType::PREEMPTED;
         staubli.ResetMotion();
-        as_.setPreempted(result_,"Action preempted by another action");
+        as_.setPreempted(mResult,"Action preempted by another action");
     }
 }
 
-
-bool StaubliControlActionManager::pollRobot(const std::vector<double> &goal_joint)
+template <class ActionType, class FeedbackType, class ResultType,  class GoalType>
+bool StaubliControlActionManager<ActionType, FeedbackType, ResultType, GoalType>::pollRobot(const std::vector<double> &goal_joints)
 {
-    std::vector<double> j2(lastJointValues);
+    std::vector<double> j2;//(lastJointValues);
     if(staubli.IsWorking())
     {
         //Calculate feedback
-        feedback_.j = j2;
-        as_.publishFeedback(feedback_);
+        mFeedback.j = j2;
+        as_.publishFeedback(mFeedback);
         double error = fabs(goal_joints[0]-j2[0])+ fabs(goal_joints[1]-j2[1])+ fabs(goal_joints[2]-j2[2])+
                 fabs(goal_joints[3]-j2[3])+ fabs(goal_joints[4]-j2[4])+ fabs(goal_joints[5]-j2[5]);
 
         //Check if we have stopped moving
         if ( staubli.IsJointQueueEmpty() && staubli.IsRobotSettled())
         {
-            result_.j = j2;
+            mResult.j = j2;
             //Check if we are close enough to our goal
             if( error >= ERROR_EPSILON )
             {
                 //Something emptied the joint goal queue, but the goal was not reached
-                as_.setAborted(result_);
+                as_.setAborted(mResult);
                 ROS_WARN(actionName_ + ":: Staubli queue emptied prematurely\n");
 
             }
             else
             {
-                as_.setSucceeded(result_);
+                as_.setSucceeded(mResult);
                 ROS_INFO(actionName_ + "GOAL Reached");
                 //Hurray, we have reached our goal!
             }
@@ -72,31 +71,31 @@ bool StaubliControlActionManager::pollRobot(const std::vector<double> &goal_join
         return true;
     }
     return true;
+}
 
 
-
-
-
-void StaubliControlActionManager::newGoalCallback(const ActionType::goal_type_::ConstPtr &goal)
+template <class ActionType, class FeedbackType, class ResultType,  class GoalType>
+void StaubliControlActionManager<ActionType, FeedbackType, ResultType, GoalType>::newGoalCallback(const typename GoalType::ConstPtr &goal)
 {
     // If there wa sa previous goal of this type, preempt it
     if(as_.isActive())
-        as_.setPreempted(result_,"Received new goal");
+        as_.setPreempted(mResult,"Received new goal");
 
-    goal_ = *goal;
-    if(sendGoal())
+    mGoal = *goal;
+    //if(sendGoal())
     {
-        as_.acceptNewGoal(goal_);
+        as_.acceptNewGoal(mGoal);
     }
     // Preempt any other goals and mark this one as running
     activateAction();
 }
 
-void StaubliControlActionManager::runFeedback()
+template <class ActionType, class FeedbackType, class ResultType,  class GoalType>
+void StaubliControlActionManager<ActionType, FeedbackType, ResultType, GoalType>::runFeedback()
 {
     if(running)
         if(as_.isActive())
-            running = pollRobot(goal_values_);
+            running = pollRobot(mGoalValues);
         else
         {
             //This shouldn't happen

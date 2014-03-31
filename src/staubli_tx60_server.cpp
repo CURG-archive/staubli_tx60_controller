@@ -71,7 +71,7 @@ StaubliNode::StaubliNode():
     node_handle(""),
     loggedIn(false),
     staubliJointStatePublisher(node_handle),
-    servicesManager(node_handle),
+    servicesManager(node_handle, staubli),
     loop_rate(10)
 {
 //    actionManagers.push_back(setJointsAction("setJoints"));

@@ -3,6 +3,10 @@
 
 #include "action_managers/staubliActionManager.h"
 #include "actionlib/server/simple_action_server.h"
+#include <boost/bind.hpp>
+#include <boost/bind/protect.hpp>
+
+
 
 template <class ActionType, class FeedbackType, class ResultType,  class GoalType>
 class StaubliControlActionManager : public StaubliActionManager
@@ -11,8 +15,9 @@ class StaubliControlActionManager : public StaubliActionManager
 protected:
     actionlib::SimpleActionServer<ActionType> as_;
     ResultType mResult;
-    FeedbackType mFeedback_;
-    std::vector<double> mGoal;
+    FeedbackType mFeedback;
+    GoalType mGoal;
+    std::vector<double> mGoalValues;
 
     /*@brief abortHard - Abort the current job and shut down the node.
     *
@@ -55,4 +60,5 @@ public:
 
 };
 
+#include "staubliControlActionManager.hpp"
 #endif /* StaubliControlActionManager_H */

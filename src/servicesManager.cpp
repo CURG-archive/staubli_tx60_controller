@@ -1,14 +1,16 @@
 #include "servicesManager.h"
+#include "CS8ServerV0.nsmap"
 
+const double ERROR_EPSILON = 1E-4;
 
-ServicesManager::ServicesManager(ros::NodeHandle node_handle)
+ServicesManager::ServicesManager(ros::NodeHandle node_handle, TX60L staubli)
 {
-    services.push_back(node_handle.advertiseService("getCartesian", &ServicesManager::getCartesian, this));
-    services.push_back(node_handle.advertiseService("getJoints",    &ServicesManager::getJoints,    this));
-    services.push_back(node_handle.advertiseService("getRotMat",    &ServicesManager::getRotMat,    this));
-    services.push_back(node_handle.advertiseService("fwdKinematics",&ServicesManager::fwdKinematics,this));
-    services.push_back(node_handle.advertiseService("invKinematics",&ServicesManager::invKinematics,this));
-    services.push_back(node_handle.advertiseService("cancelMotion", &ServicesManager::cancelMotion, this));
+    services.push_back(node_handle.advertiseService("getCartesian", &ServicesManager::getCartesianCB, this));
+    services.push_back(node_handle.advertiseService("getJoints",    &ServicesManager::getJointsCB,    this));
+    services.push_back(node_handle.advertiseService("getRotMat",    &ServicesManager::getRotMatCB,    this));
+    services.push_back(node_handle.advertiseService("fwdKinematics",&ServicesManager::fwdKinematicsCB,this));
+    services.push_back(node_handle.advertiseService("invKinematics",&ServicesManager::invKinematicsCB,this));
+    services.push_back(node_handle.advertiseService("cancelMotion", &ServicesManager::cancelMotionCB, this));
 }
 
 bool ServicesManager::cancelMotionCB(staubli_tx60::ResetMotion::Request & req,

@@ -1,6 +1,6 @@
 #include "action_managers/setCartesianActionManager.h"
 
-
+#define ERROR_EPSILON 1E-4
 
 SetCartesianActionManager::SetCartesianActionManager(const std::string & actionName)
 :StaubliControlActionManager(actionName , actionName)
@@ -15,18 +15,18 @@ bool SetCartesianActionManager::polling( const std::vector<double> &goal)
     now.resize(6);
     if(staubli.GetRobotCartesianPosition(now))
     {
-        mFeedback_.feedback.x  = (double) now[0];
-        mFeedback_.feedback.y  = (double) now[1];
-        mFeedback_.feedback.z  = (double) now[2];
-        mFeedback_.feedback.rx = (double) now[3];
-        mFeedback_.feedback.ry = (double) now[4];
-        mFeedback_.feedback.rz = (double) now[5];
-        as_.publishFeedback(mFeedback_);
+        mFeedback.feedback.x  = (double) now[0];
+        mFeedback.feedback.y  = (double) now[1];
+        mFeedback.feedback.z  = (double) now[2];
+        mFeedback.feedback.rx = (double) now[3];
+        mFeedback.feedback.ry = (double) now[4];
+        mFeedback.feedback.rz = (double) now[5];
+        as_.publishFeedback(mFeedback.feedback);
         double error = fabs(goal[0]-now[0])+ fabs(goal[1]-now[1])+ fabs(goal[2]-now[2]);
 
         ROS_INFO("distance: %f", error);
 
-        return error < ERROR_EPSILON || staubli.IsJointQueueEmpty();
+        return (error < ERROR_EPSILON) || staubli.IsJointQueueEmpty();
     }
     else
     {
@@ -35,16 +35,16 @@ bool SetCartesianActionManager::polling( const std::vector<double> &goal)
     }
 }
 
-void SetCartesianActionManager::setCartesianCB( const staubli_tx60::SetCartesianGoalConstPtr &goalPtr )
+void SetCartesianActionManager::newGoalCallbackCB(const staubli_tx60::SetCartesianGoalConstPtr &goalPtr )
  {
     ros::Rate rate(10);
     std::vector<double> goal, goalJoints;
-    mGoal.push_back( (double) goalPtr->x  );
-    mGoal.push_back( (double) goalPtr->y  );
-    mGoal.push_back( (double) goalPtr->z  );
-    mGoal.push_back( (double) goalPtr->rx );
-    mGoal.push_back( (double) goalPtr->ry );
-    mGoal.push_back( (double) goalPtr->rz );
+    mGoalValues.push_back( (double) goalPtr->x  );
+    mGoalValues.push_back( (double) goalPtr->y  );
+    mGoalValues.push_back( (double) goalPtr->z  );
+    mGoalValues.push_back( (double) goalPtr->rx );
+    mGoalValues.push_back( (double) goalPtr->ry );
+    mGoalValues.push_back( (double) goalPtr->rz );
 
     if( invKinematics2( goal, goalJoints ) )
     {
@@ -81,7 +81,7 @@ void SetCartesianActionManager::setCartesianCB( const staubli_tx60::SetCartesian
                 if( polling(goal) )
                 {
                     ROS_INFO("succeeded");
-                    as_.setSucceeded(mResult);
+                    as_.setSucceeded(mResult.result);
                     break;
                 }
                 rate.sleep();
@@ -89,13 +89,35 @@ void SetCartesianActionManager::setCartesianCB( const staubli_tx60::SetCartesian
         }
         else
         {
-            as_.setAborted(mResult);
+            as_.setAborted(mResult.result);
             ROS_ERROR( "Cannot move to specified Cartesian position." );
         }
     }
     else
     {
-        as_.setAborted(mResult);
+        as_.setAborted(mResult.result);
         ROS_ERROR("Cannot get inverse kinematics.");
     }
 }
+
+bool SetCartesianActionManager::invKinematics2( std::vector<double> &targetPos,
+      std::vector<double> & j)
+{
+  std::vector<double> curJoints;
+  j.clear();
+  if(staubli.GetRobotJoints( curJoints ))
+  {
+    if(staubli.InverseKinematics( targetPos, curJoints, j ))
+    {
+      if(fabs(j[0])+fabs(j[1])+fabs(j[2])+
+      fabs(j[3])+fabs(j[4])+fabs(j[5]) < ERROR_EPSILON )
+      {
+        ROS_ERROR("Inv kinematics returned all zeros, PROBABLY error.");
+        return false;
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
