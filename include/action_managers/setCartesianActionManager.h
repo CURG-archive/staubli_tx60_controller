@@ -4,7 +4,7 @@
 #include "action_managers/staubliControlActionManager.h"
 #include "staubli_tx60/SetCartesianAction.h"
 
-class SetCartesianActionManager : public StaubliControlActionManager<staubli_tx60::SetCartesianAction,staubli_tx60::SetCartesianActionFeedback,staubli_tx60::SetCartesianActionResult ,staubli_tx60::SetCartesianActionGoal>
+class SetCartesianActionManager : public StaubliControlActionManager<staubli_tx60::SetCartesianAction>
 {
 
     private:

@@ -84,19 +84,34 @@ catkin_package(
 add_subdirectory(./staubli_tx60_api)
 
 SET(STAUBLI_TX60_SOURCE
-src/staubli_tx60_server.cpp
-src/servicesManager.cpp
-src/action_managers/setCartesianActionManager.cpp)
-#)
+    src/staubli_tx60_server.cpp
+    src/servicesManager.cpp
+    src/staubliJointStatePublisher.cpp
+    src/action_managers/setCartesianActionManager.cpp
+    src/action_managers/setJointTrajectoryActionManager.cpp
+    src/action_managers/setJointsActionManager.cpp
+
+)
+
 
 SET(STAUBLI_TX60_HEADERS
-include/servicesManager.h
-include/staubliJointStatePublisher.h
-include/action_managers/setCartesianActionManager.h
-include/action_managers/staubliControlActionManager.h
-include/action_managers/staubliControlActionManager.hpp)
+    include/servicesManager.h
+    include/staubliJointStatePublisher.h
+    include/action_managers/setCartesianActionManager.h
+    include/action_managers/setJointTrajectoryActionManager.h
+    include/action_managers/setJointsActionManager.h
+    include/action_managers/staubliControlActionManager.h
+    include/action_managers/staubliControlActionManager.hpp
+)
 
-
+SET(STAUBLI_LIBS
+    tx60l
+    soapC
+    Server0
+    Server1
+    Server3
+    stdsoap2
+)
 
 
 ## Specify additional locations of header files
@@ -107,7 +122,7 @@ add_executable(staubli_tx60_server src/staubli_tx60_server.cpp ${STAUBLI_TX60_SO
 target_link_libraries(staubli_tx60_server ${catkin_LIBRARIES})
 add_dependencies(staubli_tx60_server staubli_tx60_generate_messages_cpp)
 
-add_executable(testing_client src/testing_client.cpp)
+add_executable(testing_client test/testing_client.cpp)
 target_link_libraries(testing_client ${catkin_LIBRARIES})
 add_dependencies(testing_client staubli_tx60_generate_messages_cpp)
 
@@ -116,12 +131,8 @@ target_link_libraries(wave ${catkin_LIBRARIES})
 add_dependencies(wave staubli_tx60_generate_messages_cpp)
 
 
-target_link_libraries(staubli_tx60_server tx60l)
-target_link_libraries(staubli_tx60_server soapC)
-target_link_libraries(staubli_tx60_server Server0)
-target_link_libraries(staubli_tx60_server Server1)
-target_link_libraries(staubli_tx60_server Server3)
-target_link_libraries(staubli_tx60_server stdsoap2)
+target_link_libraries(staubli_tx60_server ${STAUBLI_LIBS})
+
 
 
 

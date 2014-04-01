@@ -16,11 +16,6 @@
 #include <cstring>
 #include <vector>
 #include <cmath>
-//
-#include "soapCS8ServerV0Proxy.h"
-#include "soapCS8ServerV1Proxy.h"
-#include "soapCS8ServerV3Proxy.h"
-#include "CS8ServerV0.nsmap"
 
 #include <boost/foreach.hpp>
 
@@ -30,10 +25,8 @@
 #include "staubliJointStatePublisher.h"
 
 #include "action_managers/setCartesianActionManager.h"
-
-//#include "action_managers/setJointsAction.h"
-//#include "action_managers/setJointTrajectoryAction.h"
-
+#include "action_managers/setJointsActionManager.h"
+#include "action_managers/setJointTrajectoryActionManager.h"
 
 
 
@@ -50,7 +43,7 @@ class StaubliNode
         std::vector<std::string> jointNames;
         TX60L staubli;
 
-        std::vector<StaubliActionManager> actionManagers;
+        std::vector<StaubliActionManager*> actionManagers;
         ServicesManager servicesManager;
         StaubliJointStatePublisher staubliJointStatePublisher;
 
@@ -70,13 +63,17 @@ class StaubliNode
 StaubliNode::StaubliNode():
     node_handle(""),
     loggedIn(false),
-    staubliJointStatePublisher(node_handle),
+    staubliJointStatePublisher(node_handle,staubli,jointNames),
     servicesManager(node_handle, staubli),
     loop_rate(10)
 {
-//    actionManagers.push_back(setJointsAction("setJoints"));
-//    actionManagers.push_back(setJointTrajectoryAction("setJointTrajectory"));
-//    actionManagers.push_back(SetCartesianActionManager("setCartesian"));
+    SetCartesianActionManager *setCartesianActionManager = new SetCartesianActionManager("setCartesian");
+    SetJointsActionManager *setJointActionManager = new SetJointsActionManager("setJoints");
+    SetJointTrajectoryActionManager *setJointTrajectoryActionManager = new SetJointTrajectoryActionManager("setJointTrajectory");
+
+    actionManagers.push_back(setCartesianActionManager);
+    actionManagers.push_back(setJointActionManager);
+    actionManagers.push_back(setJointTrajectoryActionManager);
 
     lastJointValues.assign(6,-1);
 
@@ -138,6 +135,8 @@ void StaubliNode::run()
         //! needs to loop over action server managers and make sure that they are sending feedback if they are running
         //! for(int asmi = 0; asmi < action_server_managers_.size(); ++asmi)
         //!     asmi.sendFeedback(/*lastJointValues*/)
+
+       this->actionManagers.at(0)
 
         loop_rate.sleep();
         ros::spinOnce();

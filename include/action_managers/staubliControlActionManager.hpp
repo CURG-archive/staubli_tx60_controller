@@ -1,9 +1,9 @@
+#include "action_managers/staubliControlActionManager.h"
 
-#define ERROR_EPSILON .1
+#define ERROR_EPSILON 1E-4
 
-template <class ActionType, class FeedbackType, class ResultType,  class GoalType>
-bool
-StaubliControlActionManager <ActionType, FeedbackType, ResultType, GoalType>::abortHard()
+template <class ActionSpec>
+void StaubliControlActionManager <ActionSpec>::abortHard()
 {
     //unable to query robot state -- stop robot if possible, this is an important error
     ROS_ERROR(actionName_ + "::Communications Failure! Error when determining end of movement. *****  All goals cancelled and robot queue reset.  Staubli Server shutdown!!!");
@@ -16,28 +16,27 @@ StaubliControlActionManager <ActionType, FeedbackType, ResultType, GoalType>::ab
     staubli.ResetMotion();
     //kill entire server
     ros::shutdown();
-    return true;
 }
 
-template <class ActionType, class FeedbackType, class ResultType,  class GoalType>
-void StaubliControlActionManager<ActionType, FeedbackType, ResultType, GoalType>::cancelAction()
+template <class ActionSpec>
+void StaubliControlActionManager<ActionSpec>::cancelAction()
 {
-    if(as_.isActive()){
-        mResult.status = ResultType::PREEMPTED;
+    if(as_.isActive())
+    {
         staubli.ResetMotion();
-        as_.setPreempted(mResult,"Action preempted by another action");
+        as_.setPreempted(mResult.result,"Action preempted by another action");
     }
 }
 
-template <class ActionType, class FeedbackType, class ResultType,  class GoalType>
-bool StaubliControlActionManager<ActionType, FeedbackType, ResultType, GoalType>::pollRobot(const std::vector<double> &goal_joints)
+template <class ActionSpec>
+bool StaubliControlActionManager<ActionSpec>::pollRobot(const std::vector<double> &goal_joints)
 {
     std::vector<double> j2;//(lastJointValues);
     if(staubli.IsWorking())
     {
         //Calculate feedback
         mFeedback.j = j2;
-        as_.publishFeedback(mFeedback);
+        as_.publishFeedback(mFeedback.feedback);
         double error = fabs(goal_joints[0]-j2[0])+ fabs(goal_joints[1]-j2[1])+ fabs(goal_joints[2]-j2[2])+
                 fabs(goal_joints[3]-j2[3])+ fabs(goal_joints[4]-j2[4])+ fabs(goal_joints[5]-j2[5]);
 
@@ -51,7 +50,6 @@ bool StaubliControlActionManager<ActionType, FeedbackType, ResultType, GoalType>
                 //Something emptied the joint goal queue, but the goal was not reached
                 as_.setAborted(mResult);
                 ROS_WARN(actionName_ + ":: Staubli queue emptied prematurely\n");
-
             }
             else
             {
@@ -74,26 +72,28 @@ bool StaubliControlActionManager<ActionType, FeedbackType, ResultType, GoalType>
 }
 
 
-template <class ActionType, class FeedbackType, class ResultType,  class GoalType>
-void StaubliControlActionManager<ActionType, FeedbackType, ResultType, GoalType>::newGoalCallback(const typename GoalType::ConstPtr &goal)
+template <class ActionSpec>
+void StaubliControlActionManager<ActionSpec>::newGoalCallback(const typename ActionSpecServer::GoalConstPtr  &goal)
 {
     // If there wa sa previous goal of this type, preempt it
     if(as_.isActive())
-        as_.setPreempted(mResult,"Received new goal");
+        as_.setPreempted(mResult.result,"Received new goal");
 
-    mGoal = *goal;
+    mGoal.goal = *goal;
     //if(sendGoal())
     {
-        as_.acceptNewGoal(mGoal);
+        //as_.acceptNewGoal(mGoal);
+        as_.acceptNewGoal();
     }
     // Preempt any other goals and mark this one as running
     activateAction();
 }
 
-template <class ActionType, class FeedbackType, class ResultType,  class GoalType>
-void StaubliControlActionManager<ActionType, FeedbackType, ResultType, GoalType>::runFeedback()
+template <class ActionSpec>
+void StaubliControlActionManager<ActionSpec>::runFeedback()
 {
     if(running)
+    {
         if(as_.isActive())
             running = pollRobot(mGoalValues);
         else
@@ -104,4 +104,5 @@ void StaubliControlActionManager<ActionType, FeedbackType, ResultType, GoalType>
                 ROS_ERROR(actionName_ + " is active, but not set to running!");
             }
         }
+    }
 }

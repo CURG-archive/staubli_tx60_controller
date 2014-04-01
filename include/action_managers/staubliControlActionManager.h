@@ -5,25 +5,28 @@
 #include "actionlib/server/simple_action_server.h"
 #include <boost/bind.hpp>
 #include <boost/bind/protect.hpp>
+//#include <actionlib/action_definition.h>
 
 
-
-template <class ActionType, class FeedbackType, class ResultType,  class GoalType>
+template <class ActionSpec>
 class StaubliControlActionManager : public StaubliActionManager
 {
+    //ACTION_DEFINITION(ActionSpec);
 
 protected:
-    actionlib::SimpleActionServer<ActionType> as_;
-    ResultType mResult;
-    FeedbackType mFeedback;
-    GoalType mGoal;
+    typedef typename actionlib::SimpleActionServer<ActionSpec> ActionSpecServer;
+    ActionSpecServer as_;
+
+    typename ActionSpecServer::ActionResult mResult;
+    typename ActionSpecServer::ActionFeedback mFeedback;
+    typename ActionSpecServer::ActionGoal mGoal;
     std::vector<double> mGoalValues;
 
     /*@brief abortHard - Abort the current job and shut down the node.
     *
     *
     */
-    bool abortHard();
+    void abortHard();
 
 
     virtual void cancelAction();
@@ -50,7 +53,7 @@ public:
     * Should cancel any existing actions that are trying to control the robot
     * and send the new goal to the robot
     */
-    void newGoalCallback(const typename GoalType::ConstPtr &goal);
+    void newGoalCallback(const typename ActionSpecServer::GoalConstPtr  &goal);
 
 
     /* @brief runFeedback - Poll the goal to make sure it is still running and legal, send any feedback that needs sending

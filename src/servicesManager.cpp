@@ -1,7 +1,7 @@
 #include "servicesManager.h"
 #include "CS8ServerV0.nsmap"
 
-const double ERROR_EPSILON = 1E-4;
+#define ERROR_EPSILON 1E-4
 
 ServicesManager::ServicesManager(ros::NodeHandle node_handle, TX60L staubli)
 {

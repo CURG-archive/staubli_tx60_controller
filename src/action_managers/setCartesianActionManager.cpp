@@ -1,9 +1,8 @@
 #include "action_managers/setCartesianActionManager.h"
 
-#define ERROR_EPSILON 1E-4
 
 SetCartesianActionManager::SetCartesianActionManager(const std::string & actionName)
-:StaubliControlActionManager(actionName , actionName)
+    :StaubliControlActionManager<staubli_tx60::SetCartesianAction>(actionName , actionName)
 {
 
 }
@@ -51,8 +50,7 @@ void SetCartesianActionManager::newGoalCallbackCB(const staubli_tx60::SetCartesi
         bool moveOK = false;
         if( goalPtr -> lineCtrl == 1 )
         {
-
-            moveOK=staubli.MoveLine(mGoal,
+            moveOK=staubli.MoveLine(mGoalValues,
                                       goalPtr->params.jointVelocity,
                                       goalPtr->params.jointAcc,
                                       goalPtr->params.jointDec);
