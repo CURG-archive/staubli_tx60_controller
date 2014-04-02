@@ -7,42 +7,66 @@ SetJointsActionManager::SetJointsActionManager(const std::string & actionName)
 
 }
 
-bool SetJointsActionManager::polling( const std::vector<double> &j1 )
+
+void SetJointsActionManager::updateFeedback()
 {
     std::vector<double> j2;
     j2.resize(6);
     if(staubli.GetRobotJoints(j2))
     {
         mFeedback.feedback.j = j2;
-        as_.publishFeedback(mFeedback.feedback);
-        double error = fabs(j1[0]-j2[0])+ fabs(j1[1]-j2[1])+ fabs(j1[2]-j2[2])+
-                fabs(j1[3]-j2[3])+ fabs(j1[4]-j2[4])+ fabs(j1[5]-j2[5]);
-
-        return error < ERROR_EPSILON || staubli.IsJointQueueEmpty();
     }
     else
     {
-        ROS_ERROR("Error when determining end of movement.");
-        return false;
+        ROS_ERROR("staubli.GetRobotJoints(j2) failed");
     }
 }
 
+void SetJointsActionManager::updateResult()
+{
+    std::vector<double> j2;
+    j2.resize(6);
+    if(staubli.GetRobotJoints(j2))
+    {
+        mResult.result.j = j2;
+    }
+    else
+    {
+        ROS_ERROR("staubli.GetRobotJoints(j2) failed");
+    }
+}
 
-void SetJointsActionManager::sendGoal( const staubli_tx60::SetJointsGoalConstPtr &goalPtr ) {
+bool SetJointsActionManager::hasReachedGoal()
+{
+    std::vector<double> currentJoints;
+    std::vector<double> goalJoints = mGoal.goal.j;
+    currentJoints.resize(6);
+    staubli.GetRobotJoints(currentJoints);
 
-    bool goalOk = staubli.MoveJoints(goalPtr->j,
-                           goalPtr->params.movementType,
-                           goalPtr->params.jointVelocity,
-                           goalPtr->params.jointAcc,
-                           goalPtr->params.jointDec,
-                           goalPtr->params.endEffectorMaxTranslationVel,
-                           goalPtr->params.endEffectorMaxRotationalVel,
-                           goalPtr->params.distBlendPrev,
-                           goalPtr->params.distBlendNext
+    double error = fabs(goalJoints[0]-currentJoints[0])+ fabs(goalJoints[1]-currentJoints[1])+ fabs(goalJoints[2]-currentJoints[2])+
+            fabs(goalJoints[3]-currentJoints[3])+ fabs(goalJoints[4]-currentJoints[4])+ fabs(goalJoints[5]-currentJoints[5]);
+
+    return error < ERROR_EPSILON;
+}
+
+
+bool SetJointsActionManager::acceptGoal() {
+
+    bool goalOk = staubli.MoveJoints(mGoal.goal.j,
+                           mGoal.goal.params.movementType,
+                           mGoal.goal.params.jointVelocity,
+                           mGoal.goal.params.jointAcc,
+                           mGoal.goal.params.jointDec,
+                           mGoal.goal.params.endEffectorMaxTranslationVel,
+                           mGoal.goal.params.endEffectorMaxRotationalVel,
+                           mGoal.goal.params.distBlendPrev,
+                           mGoal.goal.params.distBlendNext
                            );
     if(!goalOk)
     {
         as_.setAborted();
         ROS_ERROR("Cannot move to specified joints' configuration.");
+        return false;
     }
+    return true;
 }

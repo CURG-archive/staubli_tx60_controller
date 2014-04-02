@@ -39,7 +39,7 @@ class StaubliNode
     private:
         ros::NodeHandle node_handle;
 
-        std::vector<double> lastJointValues;
+
         std::vector<std::string> jointNames;
         TX60L staubli;
 
@@ -74,8 +74,6 @@ StaubliNode::StaubliNode():
     actionManagers.push_back(setCartesianActionManager);
     actionManagers.push_back(setJointActionManager);
     actionManagers.push_back(setJointTrajectoryActionManager);
-
-    lastJointValues.assign(6,-1);
 
     jointNames.push_back("joint_1");
     jointNames.push_back("joint_2");
@@ -122,26 +120,20 @@ void StaubliNode::run()
 
     while(ros::ok())
     {
-        if(staubli.GetRobotJoints(lastJointValues))
-        {
-            staubliJointStatePublisher.publish(lastJointValues);
-        }
+        staubliJointStatePublisher.publish();
 
         if(!staubli.IsWorking())
         {
            ROS_ERROR("Staubli not logged in or last request failed");
         }
 
-        //! needs to loop over action server managers and make sure that they are sending feedback if they are running
-        //! for(int asmi = 0; asmi < action_server_managers_.size(); ++asmi)
-        //!     asmi.sendFeedback(/*lastJointValues*/)
 
         for(int i =0; i < actionManagers.size(); i++)
         {
-            StaubliActionManager actionManager = actionManagers.at(i);
-            if(actionManager.isRunning())
+            StaubliActionManager *actionManager = actionManagers.at(i);
+            if(actionManager->isRunning())
             {
-                actionManager.runFeedback();
+                actionManager->publishFeedback();
             }
         }
 
