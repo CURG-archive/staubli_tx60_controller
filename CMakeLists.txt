@@ -103,6 +103,7 @@ SET(STAUBLI_TX60_HEADERS
     include/action_managers/staubliControlActionManager.h
     include/action_managers/staubliControlActionManager.hpp
     include/action_managers/staubliActionManager.h
+    include/staubliState.h
 )
 
 SET(STAUBLI_LIBS

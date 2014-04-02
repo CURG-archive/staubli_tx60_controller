@@ -3,8 +3,8 @@
 
 #include <boost/foreach.hpp>
 
-SetJointTrajectoryActionManager::SetJointTrajectoryActionManager(const std::string & actionName)
-    :StaubliControlActionManager<staubli_tx60::SetJointTrajectoryAction>(actionName , actionName)
+SetJointTrajectoryActionManager::SetJointTrajectoryActionManager(const std::string & actionName, TX60L * st)
+    :StaubliControlActionManager<staubli_tx60::SetJointTrajectoryAction>(actionName , actionName, st)
 {
 
 }

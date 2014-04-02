@@ -13,7 +13,7 @@ protected:
     ros::NodeHandle nh_;
     std::string actionName_;
 
-    TX60L staubli;
+    TX60L & staubli;
 
     bool running;
     /*@brief activate the current action - set to running and cancel everyone else
@@ -28,7 +28,7 @@ protected:
     }
 
 public:
-    StaubliActionManager(const std::string & name) : actionName_(name)
+    StaubliActionManager(const std::string & name, TX60L * st) : actionName_(name), staubli(*st)
     {
         activeActionCancelledPub = nh_.advertise<std_msgs::String>("StaubliActionCancelled", 10 );
         activeActionCancelledSub = nh_.subscribe("StaubliActionCancelled",10, &StaubliActionManager::actionCancelledCB, this);

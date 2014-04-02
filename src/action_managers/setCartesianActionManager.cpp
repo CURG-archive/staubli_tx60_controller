@@ -1,8 +1,8 @@
 #include "action_managers/setCartesianActionManager.h"
 
 
-SetCartesianActionManager::SetCartesianActionManager(const std::string & actionName)
-    :StaubliControlActionManager<staubli_tx60::SetCartesianAction>(actionName , actionName)
+SetCartesianActionManager::SetCartesianActionManager(const std::string & actionName, TX60L * st)
+    :StaubliControlActionManager<staubli_tx60::SetCartesianAction>(actionName , actionName, st)
 {
 
 }

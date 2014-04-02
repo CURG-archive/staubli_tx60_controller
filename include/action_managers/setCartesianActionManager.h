@@ -13,7 +13,7 @@ class SetCartesianActionManager : public StaubliControlActionManager<staubli_tx6
 
     public:
 
-        SetCartesianActionManager(const std::string & actionName);
+        SetCartesianActionManager(const std::string & actionName,TX60L * st);
 
         virtual bool acceptGoal();
 

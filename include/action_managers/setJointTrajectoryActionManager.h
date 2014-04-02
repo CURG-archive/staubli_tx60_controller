@@ -7,7 +7,7 @@ class SetJointTrajectoryActionManager: public StaubliControlActionManager<staubl
 {
   
    public:
-      SetJointTrajectoryActionManager(const std::string & actionName);
+      SetJointTrajectoryActionManager(const std::string & actionName,TX60L * st);
 
       virtual bool acceptGoal();
 

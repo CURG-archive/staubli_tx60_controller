@@ -3,6 +3,7 @@
 
 #include "ros/ros.h"
 #include "TX60L.h"
+#include "staubliState.h"
 
 class StaubliJointStatePublisher
 {
@@ -11,11 +12,10 @@ class StaubliJointStatePublisher
         TX60L staubli;
 
         std::vector<std::string> jointNames;
-        std::vector<double> lastJointValues;
 
 	public:
-        StaubliJointStatePublisher(ros::NodeHandle node_handle, TX60L _staubli, std::vector<std::string> jointNames);
-        void publish();
+        StaubliJointStatePublisher(ros::NodeHandle node_handle, TX60L _staubli);
+        void publish(StaubliState currentState);
 
 };
 

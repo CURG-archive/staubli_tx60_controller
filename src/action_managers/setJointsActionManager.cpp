@@ -1,8 +1,8 @@
 #include "action_managers/setJointsActionManager.h"
 #include "staubli_tx60/SetJointsAction.h"
 
-SetJointsActionManager::SetJointsActionManager(const std::string & actionName)
-    :StaubliControlActionManager<staubli_tx60::SetJointsAction>(actionName , actionName)
+SetJointsActionManager::SetJointsActionManager(const std::string & actionName, TX60L * st)
+    :StaubliControlActionManager<staubli_tx60::SetJointsAction>(actionName , actionName, st)
 {
 
 }

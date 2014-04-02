@@ -45,7 +45,7 @@ protected:
 
 
 public:
-    StaubliControlActionManager(const std::string & actionName, const std::string & actionTopic) : StaubliActionManager (actionName),
+    StaubliControlActionManager(const std::string & actionName, const std::string & actionTopic ,TX60L * st) : StaubliActionManager (actionName, st),
         as_(nh_, actionTopic, boost::bind(&StaubliControlActionManager::newGoalCallback, this, _1))
     {
     }
