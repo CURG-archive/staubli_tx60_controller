@@ -136,7 +136,14 @@ void StaubliNode::run()
         //! for(int asmi = 0; asmi < action_server_managers_.size(); ++asmi)
         //!     asmi.sendFeedback(/*lastJointValues*/)
 
-       this->actionManagers.at(0)
+        for(int i =0; i < actionManagers.size(); i++)
+        {
+            StaubliActionManager actionManager = actionManagers.at(i);
+            if(actionManager.isRunning())
+            {
+                actionManager.runFeedback();
+            }
+        }
 
         loop_rate.sleep();
         ros::spinOnce();

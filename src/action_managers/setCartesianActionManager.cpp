@@ -34,21 +34,21 @@ bool SetCartesianActionManager::polling( const std::vector<double> &goal)
     }
 }
 
-void SetCartesianActionManager::newGoalCallbackCB(const staubli_tx60::SetCartesianGoalConstPtr &goalPtr )
+bool SetCartesianActionManager::sendGoal()
  {
     ros::Rate rate(10);
     std::vector<double> goal, goalJoints;
-    mGoalValues.push_back( (double) goalPtr->x  );
-    mGoalValues.push_back( (double) goalPtr->y  );
-    mGoalValues.push_back( (double) goalPtr->z  );
-    mGoalValues.push_back( (double) goalPtr->rx );
-    mGoalValues.push_back( (double) goalPtr->ry );
-    mGoalValues.push_back( (double) goalPtr->rz );
+    mGoalValues.push_back( (double) mGoal.goal.x  );
+    mGoalValues.push_back( (double) mGoal.goal.y  );
+    mGoalValues.push_back( (double) mGoal.goal.z  );
+    mGoalValues.push_back( (double) mGoal.goal.rx );
+    mGoalValues.push_back( (double) mGoal.goal.ry );
+    mGoalValues.push_back( (double) mGoal.goal.rz );
 
     if( invKinematics2( goal, goalJoints ) )
     {
         bool moveOK = false;
-        if( goalPtr -> lineCtrl == 1 )
+        if( mGoal.goal.lineCtrl == 1 )
         {
             moveOK=staubli.MoveLine(mGoalValues,
                                       goalPtr->params.jointVelocity,
@@ -76,7 +76,7 @@ void SetCartesianActionManager::newGoalCallbackCB(const staubli_tx60::SetCartesi
                     as_.setPreempted();
                     break;
                 }
-                if( polling(goal) )
+                if( polling(mGoal) )
                 {
                     ROS_INFO("succeeded");
                     as_.setSucceeded(mResult.result);
@@ -89,13 +89,16 @@ void SetCartesianActionManager::newGoalCallbackCB(const staubli_tx60::SetCartesi
         {
             as_.setAborted(mResult.result);
             ROS_ERROR( "Cannot move to specified Cartesian position." );
+            return false;
         }
     }
     else
     {
         as_.setAborted(mResult.result);
         ROS_ERROR("Cannot get inverse kinematics.");
+        return false;
     }
+    return true;
 }
 
 bool SetCartesianActionManager::invKinematics2( std::vector<double> &targetPos,

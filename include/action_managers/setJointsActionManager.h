@@ -9,7 +9,8 @@ class SetJointsActionManager: public StaubliControlActionManager<staubli_tx60::S
    public:
       SetJointsActionManager(const std::string & actionName);
       bool polling( const std::vector<double> &j1 );
-      void setJointsCB( const staubli_tx60::SetJointsGoalConstPtr &goalPtr );
+      virtual bool sendGoal() ;
+      virtual void publishFeedback();
 };
 
 #endif /* SetJointsAction_H */

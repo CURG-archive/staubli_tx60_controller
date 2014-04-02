@@ -80,9 +80,8 @@ void StaubliControlActionManager<ActionSpec>::newGoalCallback(const typename Act
         as_.setPreempted(mResult.result,"Received new goal");
 
     mGoal.goal = *goal;
-    //if(sendGoal())
+    if(sendGoal())
     {
-        //as_.acceptNewGoal(mGoal);
         as_.acceptNewGoal();
     }
     // Preempt any other goals and mark this one as running
@@ -95,14 +94,15 @@ void StaubliControlActionManager<ActionSpec>::runFeedback()
     if(running)
     {
         if(as_.isActive())
-            running = pollRobot(mGoalValues);
-        else
         {
-            //This shouldn't happen
-            if(as_.isActive())
-            {
-                ROS_ERROR(actionName_ + " is active, but not set to running!");
-            }
+            running = pollRobot(mGoalValues);
+        }
+    }
+    else
+    {
+        if(as_.isActive())
+        {
+            ROS_ERROR(actionName_ + " is active, but not set to running!");
         }
     }
 }

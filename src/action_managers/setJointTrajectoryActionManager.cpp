@@ -52,18 +52,11 @@ bool SetJointTrajectoryActionManager::polling( const std::vector<double> &j1 ) {
     }
 }
 
-void SetJointTrajectoryActionManager::setJointTrajectoryCB( const staubli_tx60::SetJointTrajectoryGoalConstPtr &goal )
+void SetJointTrajectoryActionManager::sendGoal()
 {
-    //staubli.ResetMotion();
-    ros::Rate rate(10);
-    bool success = true;
-    //only one goal can be active at a time in this type of server.  Cancel previous motion
-    staubli.ResetMotion();
-    //ROS_ERROR("staubli:: Recieved goal");
-    //For simple action servers, previous goals stop being tracked, the robot shoud
-    BOOST_FOREACH(const staubli_tx60::JointTrajectoryPoint &jointGoal,  goal->jointTrajectory)
+    BOOST_FOREACH(const staubli_tx60::JointTrajectoryPoint &jointGoal, mGoal.goal->jointTrajectory)
     {
-        if( !staubli.MoveJoints(jointGoal.jointValues,
+        bool goalOk = staubli.MoveJoints(jointGoal.jointValues,
                                 jointGoal.params.movementType,
                                 jointGoal.params.jointVelocity,
                                 jointGoal.params.jointAcc,
@@ -72,33 +65,17 @@ void SetJointTrajectoryActionManager::setJointTrajectoryCB( const staubli_tx60::
                                 jointGoal.params.endEffectorMaxRotationalVel,
                                 jointGoal.params.distBlendPrev,
                                 jointGoal.params.distBlendNext
-                                ))
+                                );
+        if(!goalOk)
         {
             as_.setAborted(mResult.result, "Could not accept goal\n");
             ROS_INFO("staubli::Goal rejected");
             return;
         }
-        ROS_INFO("Dist Blend Next: %f\n", jointGoal.params.distBlendNext);
     }
+
     if (!as_.isActive() || staubli.IsJointQueueEmpty()){
         ROS_INFO("Goal Not Active!!");
         return;
     }
-
-    ROS_INFO("Cmd received, moving to desired joint angles.");
-    while(true){
-        if (as_.isPreemptRequested() || !ros::ok()) {
-            ROS_INFO("%s: Preempted",this->actionName_.c_str());
-            // set the action state to preempted
-            staubli.ResetMotion();
-            as_.setPreempted();
-            success = false;
-            break;
-        }
-        if( polling(goal->jointTrajectory.back().jointValues) ) break;
-        rate.sleep();
-    }
-    if(success)
-        as_.setSucceeded(mResult.result);
-    ROS_INFO("staubli::Goal ended");
 }

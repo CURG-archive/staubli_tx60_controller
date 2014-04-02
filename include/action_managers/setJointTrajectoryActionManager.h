@@ -9,7 +9,9 @@ class SetJointTrajectoryActionManager: public StaubliControlActionManager<staubl
    public:
       SetJointTrajectoryActionManager(const std::string & actionName);
       bool polling( const std::vector<double> &j1 );
-      void setJointTrajectoryCB( const staubli_tx60::SetJointTrajectoryGoalConstPtr &goal ) ;
+      virtual bool sendGoal() ;
+
+      virtual void publishFeedback();
 
 
 };

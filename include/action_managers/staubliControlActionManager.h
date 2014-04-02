@@ -46,7 +46,7 @@ public:
     {
     }
 
-    //virtual void sendGoal() = 0;
+    virtual bool sendGoal() = 0;
 
 
     /*@brief - Callback for recieving a new goal
@@ -59,7 +59,7 @@ public:
     /* @brief runFeedback - Poll the goal to make sure it is still running and legal, send any feedback that needs sending
     * to the actions' clients
     */
-    void runFeedback();
+    virtual void publishFeedback() =0;
 
 };
 

@@ -102,6 +102,7 @@ SET(STAUBLI_TX60_HEADERS
     include/action_managers/setJointsActionManager.h
     include/action_managers/staubliControlActionManager.h
     include/action_managers/staubliControlActionManager.hpp
+    include/action_managers/staubliActionManager.h
 )
 
 SET(STAUBLI_LIBS

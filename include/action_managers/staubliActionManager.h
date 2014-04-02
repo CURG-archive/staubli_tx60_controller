@@ -44,7 +44,14 @@ public:
         }
     }
 
+    bool isRunning()
+    {
+        return running;
+    }
+
     virtual void cancelAction() = 0;
+
+    virtual void publishFeedback() = 0;
 };
 
 #endif /* StaubliActionManager_H */

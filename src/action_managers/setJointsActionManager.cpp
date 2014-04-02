@@ -28,11 +28,9 @@ bool SetJointsActionManager::polling( const std::vector<double> &j1 )
 }
 
 
-void SetJointsActionManager::setJointsCB( const staubli_tx60::SetJointsGoalConstPtr &goalPtr ) {
-    ros::Rate rate(10);
-    bool success = true;
-    ROS_INFO("Set Joints Action Cmd received \n");
-    bool moveOk = staubli.MoveJoints(goalPtr->j,
+void SetJointsActionManager::sendGoal( const staubli_tx60::SetJointsGoalConstPtr &goalPtr ) {
+
+    bool goalOk = staubli.MoveJoints(goalPtr->j,
                            goalPtr->params.movementType,
                            goalPtr->params.jointVelocity,
                            goalPtr->params.jointAcc,
@@ -42,32 +40,7 @@ void SetJointsActionManager::setJointsCB( const staubli_tx60::SetJointsGoalConst
                            goalPtr->params.distBlendPrev,
                            goalPtr->params.distBlendNext
                            );
-    if(moveOk)
-    {
-        ROS_INFO("Cmd received, moving to desired joint angles.");
-        while(true)
-        {
-            if (as_.isPreemptRequested() || !ros::ok())
-            {
-                ROS_INFO("%s: Preempted", actionName_.c_str());
-                // set the action state to preempted
-                staubli.ResetMotion();
-                as_.setPreempted();
-                success = false;
-                break;
-            }
-            if( polling(mGoal.goal.j) )
-            {
-                break;
-            }
-            rate.sleep();
-        }
-        if(success)
-        {
-            as_.setSucceeded(mResult.result);
-        }
-    }
-    else
+    if(!goalOk)
     {
         as_.setAborted();
         ROS_ERROR("Cannot move to specified joints' configuration.");

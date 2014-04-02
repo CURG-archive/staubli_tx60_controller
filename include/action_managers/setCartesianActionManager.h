@@ -17,7 +17,8 @@ class SetCartesianActionManager : public StaubliControlActionManager<staubli_tx6
 
         bool polling( const std::vector<double> &goal );
 
-        void newGoalCallbackCB( const staubli_tx60::SetCartesianGoalConstPtr &goalPtr );
+        virtual bool sendGoal();
+        virtual void publishFeedback();
 
 };
 
