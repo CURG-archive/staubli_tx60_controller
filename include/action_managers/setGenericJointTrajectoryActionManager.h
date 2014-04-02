@@ -14,9 +14,11 @@ class SetGenericJointTrajectoryActionManager: public StaubliControlActionManager
 {
 
    public:
-      SetJointTrajectoryActionManager(const std::string & actionName);
+      SetGenericJointTrajectoryActionManager(const std::string & actionName);
       bool polling( const std::vector<double> &j1 );
       virtual bool sendGoal() ;
+      void setJointNames();
+
 
       virtual void publishFeedback();
       bool setTrajectoryParams(staubli_tx60::SetTrajectoryParams::Request  &req,
@@ -27,10 +29,11 @@ class SetGenericJointTrajectoryActionManager: public StaubliControlActionManager
       void setDefaultParameters();
       std::map<std::string, unsigned int> mJointNameToIndexMap;
 
+      bool hasReachedGoal();
+
 private:
       staubli_tx60::SetJointTrajectoryActionGoalPtr
-      convertToStaubliJointTrajectory(control_msgs::FollowJointTrajectoryActionGoal);
+      convertToStaubliJointTrajectory(control_msgs::FollowJointTrajectoryActionGoal & goal);
+
 };
-
-
 #endif // SETGENERICJOINTTRAJECTORYACTIONMANAGER_H

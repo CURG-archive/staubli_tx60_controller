@@ -6,14 +6,14 @@
 void SetGenericJointTrajectoryActionManager::setJointNames()
 {
     XmlRpc::XmlRpcValue joint_list;
-    joint_list.[0]="joint_1";
-    joint_list.[0]="joint_2";
-    joint_list.[0]="joint_3";
-    joint_list.[0]="joint_4";
-    joint_list.[0]="joint_5";
-    joint_list.[0]="joint_6";
+    joint_list[0]="joint_1";
+    joint_list[1]="joint_2";
+    joint_list[2]="joint_3";
+    joint_list[3]="joint_4";
+    joint_list[4]="joint_5";
+    joint_list[5]="joint_6";
     if(nh_.hasParam("controller_joint_list"))
-        nh_.param("controller_joint_list",joint_list);
+        nh_.getParam("controller_joint_list",joint_list);
 
     for(unsigned int i = 0; i < joint_list.size(); ++i)
     {
@@ -22,7 +22,7 @@ void SetGenericJointTrajectoryActionManager::setJointNames()
 }
 
 
-SetGenericJointTrajectoryActionManager::setDefaultParameters()
+void SetGenericJointTrajectoryActionManager::setDefaultParameters()
 {
     //Create three valid ptrs
     while(mMovementParams.size() < 3)
@@ -60,10 +60,10 @@ SetGenericJointTrajectoryActionManager::setDefaultParameters()
 
 
 SetGenericJointTrajectoryActionManager::SetGenericJointTrajectoryActionManager(const std::string & actionName)
-    :StaubliControlActionManager<staubli_tx60::control_msgs::FollowJointTrajectoryAction>(actionName , actionName)
+    :StaubliControlActionManager<control_msgs::FollowJointTrajectoryAction>(actionName , actionName)
 {
-    mSetParameterServer = nh_.advertiseService("set_trajectory_params", &setTrajectoryParams, this);
-    setDefaultParams();
+    mSetParameterServer = nh_.advertiseService("set_trajectory_params", &SetGenericJointTrajectoryActionManager::setTrajectoryParams, this);
+    setDefaultParameters();
     setJointNames();
 }
 
@@ -79,10 +79,8 @@ SetGenericJointTrajectoryActionManager::setTrajectoryParams(
         res.succeeded = true;
         return true;
     }
-    ROS_ERROR("SetGenericTrajectoryActionManager::setTrajectoryParams - "
-              + "Tried to modify movement parameter with index %d," +
-              "which exceeds the known movement parameter list size",
-              res.trajectoryPart);
+    ROS_ERROR("SetGenericTrajectoryActionManager::setTrajectoryParams - Tried to modify movement parameter with index %d, which exceeds the known movement parameter list size",
+              req.trajectoryPart);
 
 }
 
@@ -102,9 +100,9 @@ convertToStaubliJointTrajectory(control_msgs::FollowJointTrajectoryActionGoal & 
     staubli_tx60::SetJointTrajectoryActionGoalPtr staubliGoalPtr(new staubli_tx60::SetJointTrajectoryActionGoal());
     BOOST_FOREACH(const trajectory_msgs::JointTrajectoryPoint & point, goal.goal.trajectory.points)
     {
-        staubli_tx60::JointTrajectoryPoint staubliJointGoal(mJointNameToIndexMap.size(), 0f);
-        staubliJointGoal.params = mMovementParams[1];
-        staubliJointGoal.jointValues.resize(mJointNameToIndex.size(),0f);
+        staubli_tx60::JointTrajectoryPoint staubliJointGoal;
+        staubliJointGoal.jointValues.resize(mJointNameToIndexMap.size(), 0.0f);
+        staubliJointGoal.params = *mMovementParams[1];
         for(unsigned int i = 0; i < jointIndices.size(); ++i)
             staubliJointGoal.jointValues[jointIndices[i]] = point.positions[i];
         staubliGoalPtr->goal.jointTrajectory.push_back(staubliJointGoal);
@@ -113,16 +111,29 @@ convertToStaubliJointTrajectory(control_msgs::FollowJointTrajectoryActionGoal & 
     if(goal.goal.trajectory.points.size() > 1)
         staubliGoalPtr->goal.jointTrajectory[0].params = *mMovementParams.front();
 
-    staubliGoalPtr->goal.jointTrajectory.back()->params = *mMovementParams.back();
+    staubliGoalPtr->goal.jointTrajectory.back().params = *mMovementParams.back();
 
     return staubliGoalPtr;
 }
 
+bool SetGenericJointTrajectoryActionManager::hasReachedGoal()
+{
+    std::vector<double> currentJoints;
+    std::vector<double> goalJoints = mGoalValues;
+    currentJoints.resize(6);
+    staubli.GetRobotJoints(currentJoints);
+
+    double error = fabs(goalJoints[0]-currentJoints[0])+ fabs(goalJoints[1]-currentJoints[1])+ fabs(goalJoints[2]-currentJoints[2])+
+            fabs(goalJoints[3]-currentJoints[3])+ fabs(goalJoints[4]-currentJoints[4])+ fabs(goalJoints[5]-currentJoints[5]);
+
+    return error < ERROR_EPSILON;
+}
 
 
 bool SetGenericJointTrajectoryActionManager::sendGoal()
 {
-    BOOST_FOREACH(const staubli_tx60::JointTrajectoryPoint &jointGoal, convertToStaubliJointTrajectory(mGoal)->goal.jointTrajectory)
+    staubli_tx60::SetJointTrajectoryActionGoalConstPtr staubliJointTrajActionGoal = convertToStaubliJointTrajectory(mGoal);
+    BOOST_FOREACH(const staubli_tx60::JointTrajectoryPoint &jointGoal, staubliJointTrajActionGoal->goal.jointTrajectory)
     {
         bool goalOk = staubli.MoveJoints(jointGoal.jointValues,
                                 jointGoal.params.movementType,
@@ -138,12 +149,14 @@ bool SetGenericJointTrajectoryActionManager::sendGoal()
         {
             as_.setAborted(mResult.result, "Could not accept goal\n");
             ROS_INFO("staubli::Goal rejected");
-            return;
+            return false;
         }
     }
 
     if (!as_.isActive() || staubli.IsJointQueueEmpty()){
         ROS_INFO("Goal Not Active!!");
-        return;
+        return false;
     }
+    mGoalValues = staubliJointTrajActionGoal->goal.jointTrajectory.front().jointValues;
+    return true;
 }
