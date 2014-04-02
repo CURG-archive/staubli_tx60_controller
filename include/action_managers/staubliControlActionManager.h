@@ -5,13 +5,11 @@
 #include "actionlib/server/simple_action_server.h"
 #include <boost/bind.hpp>
 #include <boost/bind/protect.hpp>
-//#include <actionlib/action_definition.h>
 
 
 template <class ActionSpec>
 class StaubliControlActionManager : public StaubliActionManager
 {
-    //ACTION_DEFINITION(ActionSpec);
 
 protected:
     typedef typename actionlib::SimpleActionServer<ActionSpec> ActionSpecServer;
