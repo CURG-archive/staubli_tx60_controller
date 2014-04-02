@@ -6,9 +6,9 @@ template <class ActionSpec>
 void StaubliControlActionManager <ActionSpec>::abortHard()
 {
     //unable to query robot state -- stop robot if possible, this is an important error
-    ROS_ERROR(actionName_ + "::Communications Failure! Error when determining end of movement. *****  All goals cancelled and robot queue reset.  Staubli Server shutdown!!!");
+    ROS_ERROR("%s ::Communications Failure! Error when determining end of movement. *****  All goals cancelled and robot queue reset.  Staubli Server shutdown!!!",actionName_.c_str());
 
-    as_.setAborted(mResult,"Communications failure - could not query joint position\n");
+    as_.setAborted(mResult.result,"Communications failure - could not query joint position\n");
     //communication failures are bad.
     //Shut down the action server if they occur.  Don't accept new goals.
     as_.shutdown();
@@ -28,48 +28,42 @@ void StaubliControlActionManager<ActionSpec>::cancelAction()
     }
 }
 
-//template <class ActionSpec>
-//bool StaubliControlActionManager<ActionSpec>::pollRobot(const std::vector<double> &goal_joints)
-//{
-//    std::vector<double> j2;//(lastJointValues);
-//    if(staubli.IsWorking())
-//    {
-//        //Calculate feedback
-//        mFeedback.feedback.j = j2;
-//        as_.publishFeedback(mFeedback.feedback);
-//        double error = fabs(goal_joints[0]-j2[0])+ fabs(goal_joints[1]-j2[1])+ fabs(goal_joints[2]-j2[2])+
-//                fabs(goal_joints[3]-j2[3])+ fabs(goal_joints[4]-j2[4])+ fabs(goal_joints[5]-j2[5]);
+template <class ActionSpec>
+bool StaubliControlActionManager<ActionSpec>::pollRobot(const std::vector<double> &goal_joints)
+{
+    if(staubli.IsWorking())
+    {
+        updateFeedback();
+        as_.publishFeedback(mFeedback.feedback);
 
-//        //Check if we have stopped moving
-//        if ( staubli.IsJointQueueEmpty() && staubli.IsRobotSettled())
-//        {
-//            mResult.j = j2;
-//            //Check if we are close enough to our goal
-//            if( error >= ERROR_EPSILON )
-//            {
-//                //Something emptied the joint goal queue, but the goal was not reached
-//                as_.setAborted(mResult);
-//                ROS_WARN(actionName_ + ":: Staubli queue emptied prematurely\n");
-//            }
-//            else
-//            {
-//                as_.setSucceeded(mResult);
-//                ROS_INFO(actionName_ + "GOAL Reached");
-//                //Hurray, we have reached our goal!
-//            }
-//            return true;
-//        }
-//        else // We are still moving and everything is ok
-//        {
-//            return false;
-//        }
-//    }
-//    else {
-//        abortHard();
-//        return true;
-//    }
-//    return true;
-//}
+        if(isRobotFinishedMoving())
+        {
+            updateResult();
+
+            if(hasReachedGoal())
+            {
+                as_.setSucceeded(mResult.result);
+                ROS_INFO("%s GOAL Reached", actionName_.c_str() );
+            }
+            else
+            {
+                as_.setAborted(mResult.result);
+                ROS_WARN("%s :: Staubli queue emptied prematurely, but goal was not reached\n",actionName_.c_str());
+            }
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
+    else
+    {
+        abortHard();
+        return false;
+    }
+    return true;
+}
 
 
 template <class ActionSpec>

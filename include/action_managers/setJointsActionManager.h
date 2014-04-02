@@ -8,8 +8,11 @@ class SetJointsActionManager: public StaubliControlActionManager<staubli_tx60::S
 {
    public:
       SetJointsActionManager(const std::string & actionName);
-      bool pollRobot( const std::vector<double> &j1 );
       virtual bool acceptGoal();
+
+      virtual void updateFeedback();
+      virtual void updateResult();
+      virtual bool hasReachedGoal();
 };
 
 #endif /* SetJointsAction_H */

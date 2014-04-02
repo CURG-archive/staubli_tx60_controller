@@ -9,47 +9,46 @@ SetJointTrajectoryActionManager::SetJointTrajectoryActionManager(const std::stri
 
 }
 
-bool SetJointTrajectoryActionManager::pollRobot( const std::vector<double> &j1 ) {
+
+void SetJointTrajectoryActionManager::updateFeedback()
+{
     std::vector<double> j2;
     j2.resize(6);
     if(staubli.GetRobotJoints(j2))
     {
         mFeedback.feedback.j = j2;
-        as_.publishFeedback(mFeedback.feedback);
-        double error = fabs(j1[0]-j2[0])+ fabs(j1[1]-j2[1])+ fabs(j1[2]-j2[2])+
-                fabs(j1[3]-j2[3])+ fabs(j1[4]-j2[4])+ fabs(j1[5]-j2[5]);
-        //	    ROS_INFO( "Error to target %lf", error );
-        if ( staubli.IsJointQueueEmpty() && staubli.IsRobotSettled())
-        {
-            mResult.result.j = j2;
-            if( error >= ERROR_EPSILON )
-            {
-                //Something emptied the joint goal queue, but the goal was not reached
-                as_.setAborted(mResult.result);
-                ROS_WARN("Staubli queue emptied prematurely\n");
-
-            } else
-            {
-                as_.setSucceeded(mResult.result);
-            }
-            return true;
-        }else  //if (staubli.IsJointQueueEmpty)
-        {
-            return false;
-        }
-    } else {//	 if(staubli.GetRobotJoints(j2))
-        //unable to query robot state -- stop robot if possible, this is an important error
-        ROS_ERROR("****SetJointTrajectoryAction:: Communications Failure! Error when determining end of movement. *****  All goals cancelled and robot queue reset.  Staubli Server shutdown!!!");
-        as_.setAborted(mResult.result ,"Communications failure - could not query joint position\n");
-        //communication failures are bad.
-        //Shut down the action server if they occur.  Don't accept new goals.
-        as_.shutdown();
-        //Cancel existing motion of robot if possible
-        staubli.ResetMotion();
-        //kill entire server
-        ros::shutdown();
-        return true;
     }
+    else
+    {
+        ROS_ERROR("staubli.GetRobotJoints(j2) failed");
+    }
+}
+
+void SetJointTrajectoryActionManager::updateResult()
+{
+    std::vector<double> j2;
+    j2.resize(6);
+    if(staubli.GetRobotJoints(j2))
+    {
+        mResult.result.j = j2;
+    }
+    else
+    {
+        ROS_ERROR("staubli.GetRobotJoints(j2) failed");
+    }
+}
+
+bool SetJointTrajectoryActionManager::hasReachedGoal()
+{
+    std::vector<double> currentJoints;
+    std::vector<double> goalJoints = mGoal.goal.jointTrajectory.back().jointValues;
+    currentJoints.resize(6);
+    staubli.GetRobotJoints(currentJoints);
+
+    double error = fabs(goalJoints[0]-currentJoints[0])+ fabs(goalJoints[1]-currentJoints[1])+ fabs(goalJoints[2]-currentJoints[2])+
+            fabs(goalJoints[3]-currentJoints[3])+ fabs(goalJoints[4]-currentJoints[4])+ fabs(goalJoints[5]-currentJoints[5]);
+
+    return error < ERROR_EPSILON;
 }
 
 bool SetJointTrajectoryActionManager::acceptGoal()

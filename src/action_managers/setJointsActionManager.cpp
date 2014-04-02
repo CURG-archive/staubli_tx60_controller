@@ -7,24 +7,46 @@ SetJointsActionManager::SetJointsActionManager(const std::string & actionName)
 
 }
 
-bool SetJointsActionManager::pollRobot( const std::vector<double> &j1 )
+
+void SetJointsActionManager::updateFeedback()
 {
     std::vector<double> j2;
     j2.resize(6);
     if(staubli.GetRobotJoints(j2))
     {
         mFeedback.feedback.j = j2;
-        as_.publishFeedback(mFeedback.feedback);
-        double error = fabs(j1[0]-j2[0])+ fabs(j1[1]-j2[1])+ fabs(j1[2]-j2[2])+
-                fabs(j1[3]-j2[3])+ fabs(j1[4]-j2[4])+ fabs(j1[5]-j2[5]);
-
-        return error < ERROR_EPSILON || staubli.IsJointQueueEmpty();
     }
     else
     {
-        ROS_ERROR("Error when determining end of movement.");
-        return false;
+        ROS_ERROR("staubli.GetRobotJoints(j2) failed");
     }
+}
+
+void SetJointsActionManager::updateResult()
+{
+    std::vector<double> j2;
+    j2.resize(6);
+    if(staubli.GetRobotJoints(j2))
+    {
+        mResult.result.j = j2;
+    }
+    else
+    {
+        ROS_ERROR("staubli.GetRobotJoints(j2) failed");
+    }
+}
+
+bool SetJointsActionManager::hasReachedGoal()
+{
+    std::vector<double> currentJoints;
+    std::vector<double> goalJoints = mGoal.goal.j;
+    currentJoints.resize(6);
+    staubli.GetRobotJoints(currentJoints);
+
+    double error = fabs(goalJoints[0]-currentJoints[0])+ fabs(goalJoints[1]-currentJoints[1])+ fabs(goalJoints[2]-currentJoints[2])+
+            fabs(goalJoints[3]-currentJoints[3])+ fabs(goalJoints[4]-currentJoints[4])+ fabs(goalJoints[5]-currentJoints[5]);
+
+    return error < ERROR_EPSILON;
 }
 
 

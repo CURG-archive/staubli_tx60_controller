@@ -1,5 +1,8 @@
+#goal definition
 JointTrajectoryPoint[] jointTrajectory # Points contain joint space goal points and staubli movement params which encode velocity, acceleration, and goal region constraints
 ---
+#result definition
 float64[] j # current joint position
 ---
+#feedback
 float64[] j # final joint position

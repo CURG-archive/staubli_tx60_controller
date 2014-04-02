@@ -1,6 +1,3 @@
-bin
-action
-devel
 cmake_install.cmake
 gtest
 build
@@ -13,10 +10,6 @@ CMakeCache
 *Goal.msg
 *Result.msg
 *Feedback.msg
-.o
-.so
-.hg
-roslib
 src/staubli_tx60/srv
 src/staubli_tx60/msg
 \#*

@@ -23,8 +23,6 @@ protected:
     std::vector<double> mGoalValues;
 
     /*@brief abortHard - Abort the current job and shut down the node.
-    *
-    *
     */
     void abortHard();
 
@@ -37,7 +35,15 @@ protected:
     *
     *@returns whether the goal is still in progress
     */
-    virtual bool pollRobot( const std::vector<double> &goal_joints) =0;
+    bool pollRobot( const std::vector<double> &goal_joints);
+
+    //these are helpers to poll robot that are
+    //specific to the subclasses
+    virtual void updateFeedback() = 0;
+    virtual void updateResult() = 0;
+    virtual bool hasReachedGoal() = 0;
+
+    bool isRobotFinishedMoving(){return staubli.IsJointQueueEmpty() && staubli.IsRobotSettled();}
 
 
 public:
@@ -60,6 +66,8 @@ public:
     * to the actions' clients
     */
     virtual void publishFeedback();
+
+
 
 };
 

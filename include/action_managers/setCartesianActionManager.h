@@ -15,9 +15,11 @@ class SetCartesianActionManager : public StaubliControlActionManager<staubli_tx6
 
         SetCartesianActionManager(const std::string & actionName);
 
-        bool pollRobot( const std::vector<double> &goal );
-
         virtual bool acceptGoal();
+
+        virtual void updateFeedback();
+        virtual void updateResult();
+        virtual bool hasReachedGoal();
 
 };
 

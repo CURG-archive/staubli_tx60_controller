@@ -8,10 +8,12 @@ class SetJointTrajectoryActionManager: public StaubliControlActionManager<staubl
   
    public:
       SetJointTrajectoryActionManager(const std::string & actionName);
-      bool pollRobot( const std::vector<double> &j1 );
+
       virtual bool acceptGoal();
 
-
+      virtual void updateFeedback();
+      virtual void updateResult();
+      virtual bool hasReachedGoal();
 
 };
 
