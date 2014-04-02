@@ -7,7 +7,7 @@ SetJointsActionManager::SetJointsActionManager(const std::string & actionName)
 
 }
 
-bool SetJointsActionManager::polling( const std::vector<double> &j1 )
+bool SetJointsActionManager::pollRobot( const std::vector<double> &j1 )
 {
     std::vector<double> j2;
     j2.resize(6);
@@ -28,21 +28,23 @@ bool SetJointsActionManager::polling( const std::vector<double> &j1 )
 }
 
 
-void SetJointsActionManager::sendGoal( const staubli_tx60::SetJointsGoalConstPtr &goalPtr ) {
+bool SetJointsActionManager::acceptGoal() {
 
-    bool goalOk = staubli.MoveJoints(goalPtr->j,
-                           goalPtr->params.movementType,
-                           goalPtr->params.jointVelocity,
-                           goalPtr->params.jointAcc,
-                           goalPtr->params.jointDec,
-                           goalPtr->params.endEffectorMaxTranslationVel,
-                           goalPtr->params.endEffectorMaxRotationalVel,
-                           goalPtr->params.distBlendPrev,
-                           goalPtr->params.distBlendNext
+    bool goalOk = staubli.MoveJoints(mGoal.goal.j,
+                           mGoal.goal.params.movementType,
+                           mGoal.goal.params.jointVelocity,
+                           mGoal.goal.params.jointAcc,
+                           mGoal.goal.params.jointDec,
+                           mGoal.goal.params.endEffectorMaxTranslationVel,
+                           mGoal.goal.params.endEffectorMaxRotationalVel,
+                           mGoal.goal.params.distBlendPrev,
+                           mGoal.goal.params.distBlendNext
                            );
     if(!goalOk)
     {
         as_.setAborted();
         ROS_ERROR("Cannot move to specified joints' configuration.");
+        return false;
     }
+    return true;
 }

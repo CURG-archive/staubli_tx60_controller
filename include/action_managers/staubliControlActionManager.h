@@ -37,7 +37,7 @@ protected:
     *
     *@returns whether the goal is still in progress
     */
-    bool pollRobot( const std::vector<double> &goal_joints) ;
+    virtual bool pollRobot( const std::vector<double> &goal_joints) =0;
 
 
 public:
@@ -46,7 +46,7 @@ public:
     {
     }
 
-    virtual bool sendGoal() = 0;
+    virtual bool acceptGoal() = 0;
 
 
     /*@brief - Callback for recieving a new goal
@@ -59,7 +59,7 @@ public:
     /* @brief runFeedback - Poll the goal to make sure it is still running and legal, send any feedback that needs sending
     * to the actions' clients
     */
-    virtual void publishFeedback() =0;
+    virtual void publishFeedback();
 
 };
 

@@ -28,48 +28,48 @@ void StaubliControlActionManager<ActionSpec>::cancelAction()
     }
 }
 
-template <class ActionSpec>
-bool StaubliControlActionManager<ActionSpec>::pollRobot(const std::vector<double> &goal_joints)
-{
-    std::vector<double> j2;//(lastJointValues);
-    if(staubli.IsWorking())
-    {
-        //Calculate feedback
-        mFeedback.j = j2;
-        as_.publishFeedback(mFeedback.feedback);
-        double error = fabs(goal_joints[0]-j2[0])+ fabs(goal_joints[1]-j2[1])+ fabs(goal_joints[2]-j2[2])+
-                fabs(goal_joints[3]-j2[3])+ fabs(goal_joints[4]-j2[4])+ fabs(goal_joints[5]-j2[5]);
+//template <class ActionSpec>
+//bool StaubliControlActionManager<ActionSpec>::pollRobot(const std::vector<double> &goal_joints)
+//{
+//    std::vector<double> j2;//(lastJointValues);
+//    if(staubli.IsWorking())
+//    {
+//        //Calculate feedback
+//        mFeedback.feedback.j = j2;
+//        as_.publishFeedback(mFeedback.feedback);
+//        double error = fabs(goal_joints[0]-j2[0])+ fabs(goal_joints[1]-j2[1])+ fabs(goal_joints[2]-j2[2])+
+//                fabs(goal_joints[3]-j2[3])+ fabs(goal_joints[4]-j2[4])+ fabs(goal_joints[5]-j2[5]);
 
-        //Check if we have stopped moving
-        if ( staubli.IsJointQueueEmpty() && staubli.IsRobotSettled())
-        {
-            mResult.j = j2;
-            //Check if we are close enough to our goal
-            if( error >= ERROR_EPSILON )
-            {
-                //Something emptied the joint goal queue, but the goal was not reached
-                as_.setAborted(mResult);
-                ROS_WARN(actionName_ + ":: Staubli queue emptied prematurely\n");
-            }
-            else
-            {
-                as_.setSucceeded(mResult);
-                ROS_INFO(actionName_ + "GOAL Reached");
-                //Hurray, we have reached our goal!
-            }
-            return true;
-        }
-        else // We are still moving and everything is ok
-        {
-            return false;
-        }
-    }
-    else {
-        abortHard();
-        return true;
-    }
-    return true;
-}
+//        //Check if we have stopped moving
+//        if ( staubli.IsJointQueueEmpty() && staubli.IsRobotSettled())
+//        {
+//            mResult.j = j2;
+//            //Check if we are close enough to our goal
+//            if( error >= ERROR_EPSILON )
+//            {
+//                //Something emptied the joint goal queue, but the goal was not reached
+//                as_.setAborted(mResult);
+//                ROS_WARN(actionName_ + ":: Staubli queue emptied prematurely\n");
+//            }
+//            else
+//            {
+//                as_.setSucceeded(mResult);
+//                ROS_INFO(actionName_ + "GOAL Reached");
+//                //Hurray, we have reached our goal!
+//            }
+//            return true;
+//        }
+//        else // We are still moving and everything is ok
+//        {
+//            return false;
+//        }
+//    }
+//    else {
+//        abortHard();
+//        return true;
+//    }
+//    return true;
+//}
 
 
 template <class ActionSpec>
@@ -80,7 +80,7 @@ void StaubliControlActionManager<ActionSpec>::newGoalCallback(const typename Act
         as_.setPreempted(mResult.result,"Received new goal");
 
     mGoal.goal = *goal;
-    if(sendGoal())
+    if(acceptGoal())
     {
         as_.acceptNewGoal();
     }
@@ -89,7 +89,7 @@ void StaubliControlActionManager<ActionSpec>::newGoalCallback(const typename Act
 }
 
 template <class ActionSpec>
-void StaubliControlActionManager<ActionSpec>::runFeedback()
+void StaubliControlActionManager<ActionSpec>::publishFeedback()
 {
     if(running)
     {
@@ -102,7 +102,7 @@ void StaubliControlActionManager<ActionSpec>::runFeedback()
     {
         if(as_.isActive())
         {
-            ROS_ERROR(actionName_ + " is active, but not set to running!");
+            ROS_ERROR("%s is active, but not set to running!", actionName_.c_str() );
         }
     }
 }

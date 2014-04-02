@@ -9,7 +9,7 @@ SetJointTrajectoryActionManager::SetJointTrajectoryActionManager(const std::stri
 
 }
 
-bool SetJointTrajectoryActionManager::polling( const std::vector<double> &j1 ) {
+bool SetJointTrajectoryActionManager::pollRobot( const std::vector<double> &j1 ) {
     std::vector<double> j2;
     j2.resize(6);
     if(staubli.GetRobotJoints(j2))
@@ -52,9 +52,9 @@ bool SetJointTrajectoryActionManager::polling( const std::vector<double> &j1 ) {
     }
 }
 
-void SetJointTrajectoryActionManager::sendGoal()
+bool SetJointTrajectoryActionManager::acceptGoal()
 {
-    BOOST_FOREACH(const staubli_tx60::JointTrajectoryPoint &jointGoal, mGoal.goal->jointTrajectory)
+    BOOST_FOREACH(const staubli_tx60::JointTrajectoryPoint &jointGoal, mGoal.goal.jointTrajectory)
     {
         bool goalOk = staubli.MoveJoints(jointGoal.jointValues,
                                 jointGoal.params.movementType,
@@ -70,12 +70,14 @@ void SetJointTrajectoryActionManager::sendGoal()
         {
             as_.setAborted(mResult.result, "Could not accept goal\n");
             ROS_INFO("staubli::Goal rejected");
-            return;
+            return false;
         }
     }
 
     if (!as_.isActive() || staubli.IsJointQueueEmpty()){
         ROS_INFO("Goal Not Active!!");
-        return;
+        return false;
     }
+
+    return true;
 }

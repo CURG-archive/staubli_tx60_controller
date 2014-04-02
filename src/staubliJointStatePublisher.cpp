@@ -7,9 +7,10 @@ StaubliJointStatePublisher::StaubliJointStatePublisher(ros::NodeHandle node_hand
     jointNames(_jointNames)
 {
     joints_pub = node_handle.advertise<sensor_msgs::JointState>("joints", 10);
+    lastJointValues.assign(6,-1);
 }
 
-void StaubliJointStatePublisher::publish(std::vector<double> lastJointValues)
+void StaubliJointStatePublisher::publish()
 {
 	sensor_msgs::JointState jointStateMsg;
 	if(staubli.GetRobotJoints(lastJointValues))

@@ -8,7 +8,7 @@ SetCartesianActionManager::SetCartesianActionManager(const std::string & actionN
 }
 
 
-bool SetCartesianActionManager::polling( const std::vector<double> &goal)
+bool SetCartesianActionManager::pollRobot( const std::vector<double> &goal)
 {
     std::vector<double> now;
     now.resize(6);
@@ -34,9 +34,8 @@ bool SetCartesianActionManager::polling( const std::vector<double> &goal)
     }
 }
 
-bool SetCartesianActionManager::sendGoal()
+bool SetCartesianActionManager::acceptGoal()
  {
-    ros::Rate rate(10);
     std::vector<double> goal, goalJoints;
     mGoalValues.push_back( (double) mGoal.goal.x  );
     mGoalValues.push_back( (double) mGoal.goal.y  );
@@ -51,41 +50,20 @@ bool SetCartesianActionManager::sendGoal()
         if( mGoal.goal.lineCtrl == 1 )
         {
             moveOK=staubli.MoveLine(mGoalValues,
-                                      goalPtr->params.jointVelocity,
-                                      goalPtr->params.jointAcc,
-                                      goalPtr->params.jointDec);
+                                      mGoal.goal.params.jointVelocity,
+                                      mGoal.goal.params.jointAcc,
+                                      mGoal.goal.params.jointDec);
         }
         else
         {
             moveOK=staubli.MoveJoints(goalJoints,
-                                      goalPtr->params.movementType,
-                                      goalPtr->params.jointVelocity,
-                                      goalPtr->params.jointAcc,
-                                      goalPtr->params.jointDec);
+                                      mGoal.goal.params.movementType,
+                                      mGoal.goal.params.jointVelocity,
+                                      mGoal.goal.params.jointAcc,
+                                      mGoal.goal.params.jointDec);
         }
 
-        if( moveOK )
-        {
-            ROS_INFO("Cmd received, moving to desired Cartesian pos.");
-            while(true)
-            {
-                if (as_.isPreemptRequested() || !ros::ok())
-                {
-                    ROS_INFO("%s: Preempted", actionName_.c_str());
-                    staubli.ResetMotion();
-                    as_.setPreempted();
-                    break;
-                }
-                if( polling(mGoal) )
-                {
-                    ROS_INFO("succeeded");
-                    as_.setSucceeded(mResult.result);
-                    break;
-                }
-                rate.sleep();
-            }
-        }
-        else
+        if(!moveOK )
         {
             as_.setAborted(mResult.result);
             ROS_ERROR( "Cannot move to specified Cartesian position." );
