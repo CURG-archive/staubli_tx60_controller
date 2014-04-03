@@ -18,7 +18,9 @@ void SetGenericJointTrajectoryActionManager::setJointNames()
     for(unsigned int i = 0; i < joint_list.size(); ++i)
     {
         mJointNameToIndexMap[joint_list[i]] = i;
+        mJointNames.push_back(joint_list[i]);
     }
+
 }
 
 
@@ -59,8 +61,8 @@ void SetGenericJointTrajectoryActionManager::setDefaultParameters()
 
 
 
-SetGenericJointTrajectoryActionManager::SetGenericJointTrajectoryActionManager(const std::string & actionName)
-    :StaubliControlActionManager<control_msgs::FollowJointTrajectoryAction>(actionName , actionName)
+SetGenericJointTrajectoryActionManager::SetGenericJointTrajectoryActionManager(const std::string & actionName, TX60L * st)
+    :StaubliControlActionManager<control_msgs::FollowJointTrajectoryAction>(actionName , actionName, st)
 {
     mSetParameterServer = nh_.advertiseService("set_trajectory_params", &SetGenericJointTrajectoryActionManager::setTrajectoryParams, this);
     setDefaultParameters();
@@ -116,21 +118,36 @@ convertToStaubliJointTrajectory(control_msgs::FollowJointTrajectoryActionGoal & 
     return staubliGoalPtr;
 }
 
-bool SetGenericJointTrajectoryActionManager::hasReachedGoal()
-{
-    std::vector<double> currentJoints;
-    std::vector<double> goalJoints = mGoalValues;
-    currentJoints.resize(6);
-    staubli.GetRobotJoints(currentJoints);
 
-    double error = fabs(goalJoints[0]-currentJoints[0])+ fabs(goalJoints[1]-currentJoints[1])+ fabs(goalJoints[2]-currentJoints[2])+
-            fabs(goalJoints[3]-currentJoints[3])+ fabs(goalJoints[4]-currentJoints[4])+ fabs(goalJoints[5]-currentJoints[5]);
+
+bool SetGenericJointTrajectoryActionManager::hasReachedGoal(StaubliState & state)
+{
+    double error = fabs(mGoalValues[0]-state.currentJoints[0])+ fabs(mGoalValues[1]-state.currentJoints[1])+ fabs(mGoalValues[2]-state.currentJoints[2])+
+            fabs(mGoalValues[3]-state.currentJoints[3])+ fabs(mGoalValues[4]-state.currentJoints[4])+ fabs(mGoalValues[5]-state.currentJoints[5]);
 
     return error < ERROR_EPSILON;
 }
 
+void SetGenericJointTrajectoryActionManager::updateFeedback(StaubliState & state)
+{
+        mFeedback.feedback.joint_names = mJointNames;
+        mFeedback.feedback.actual.positions = state.currentJoints;
+}
 
-bool SetGenericJointTrajectoryActionManager::sendGoal()
+
+
+void SetGenericJointTrajectoryActionManager::updateResult(StaubliState & state)
+{
+    if(hasReachedGoal(state))
+        mResult.result.error_code = 0;
+    else
+        mResult.result.error_code = mResult.result.GOAL_TOLERANCE_VIOLATED;
+
+}
+
+
+
+bool SetGenericJointTrajectoryActionManager::acceptGoal()
 {
     staubli_tx60::SetJointTrajectoryActionGoalConstPtr staubliJointTrajActionGoal = convertToStaubliJointTrajectory(mGoal);
     BOOST_FOREACH(const staubli_tx60::JointTrajectoryPoint &jointGoal, staubliJointTrajActionGoal->goal.jointTrajectory)

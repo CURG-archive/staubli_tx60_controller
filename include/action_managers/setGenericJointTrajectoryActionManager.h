@@ -14,26 +14,31 @@ class SetGenericJointTrajectoryActionManager: public StaubliControlActionManager
 {
 
    public:
-      SetGenericJointTrajectoryActionManager(const std::string & actionName);
-      bool polling( const std::vector<double> &j1 );
-      virtual bool sendGoal() ;
+      SetGenericJointTrajectoryActionManager(const std::string & actionName, TX60L * st);
       void setJointNames();
 
 
-      virtual void publishFeedback();
+
+
+
       bool setTrajectoryParams(staubli_tx60::SetTrajectoryParams::Request  &req,
                                staubli_tx60::SetTrajectoryParams::Response &res);
       ros::ServiceServer mSetParameterServer;
       std::vector<staubli_tx60::StaubliMovementParamsPtr> mMovementParams;
-
       void setDefaultParameters();
       std::map<std::string, unsigned int> mJointNameToIndexMap;
 
-      bool hasReachedGoal();
+
+      virtual bool acceptGoal() ;
+
+      virtual void updateFeedback(StaubliState & state);
+      virtual void updateResult(StaubliState & state);
+      bool hasReachedGoal(StaubliState & state);
 
 private:
       staubli_tx60::SetJointTrajectoryActionGoalPtr
       convertToStaubliJointTrajectory(control_msgs::FollowJointTrajectoryActionGoal & goal);
+      std::vector<std::string> mJointNames;
 
 };
 #endif // SETGENERICJOINTTRAJECTORYACTIONMANAGER_H
