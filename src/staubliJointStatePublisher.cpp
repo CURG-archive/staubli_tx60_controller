@@ -5,7 +5,7 @@
 StaubliJointStatePublisher::StaubliJointStatePublisher(ros::NodeHandle node_handle, TX60L _staubli):
     staubli(_staubli)
 {
-    joints_pub = node_handle.advertise<sensor_msgs::JointState>("joints", 10);
+    joints_pub = node_handle.advertise<sensor_msgs::JointState>("joint_states", 10);
 
     jointNames.push_back("joint_1");
     jointNames.push_back("joint_2");
@@ -23,8 +23,9 @@ StaubliJointStatePublisher::StaubliJointStatePublisher(ros::NodeHandle node_hand
 
 void StaubliJointStatePublisher::publish(StaubliState currentState)
 {
-	sensor_msgs::JointState jointStateMsg;
-    jointStateMsg.name = jointNames;
-    jointStateMsg.position = currentState.currentJoints;
+  sensor_msgs::JointStatePtr jointStateMsg(new sensor_msgs::JointState());
+    jointStateMsg->name = jointNames;
+    jointStateMsg->position = currentState.currentJoints;
+    jointStateMsg->header.stamp = ros::Time::now();
     joints_pub.publish(jointStateMsg);
 }
