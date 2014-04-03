@@ -27,6 +27,8 @@
 #include "action_managers/setCartesianActionManager.h"
 #include "action_managers/setJointsActionManager.h"
 #include "action_managers/setJointTrajectoryActionManager.h"
+#include "action_managers/setGenericJointTrajectoryActionManager.h"
+
 
 #include "staubliState.h"
 
@@ -68,10 +70,13 @@ StaubliNode::StaubliNode():
     SetCartesianActionManager *setCartesianActionManager = new SetCartesianActionManager("setCartesian",&staubli);
     SetJointsActionManager *setJointActionManager = new SetJointsActionManager("setJoints",&staubli);
     SetJointTrajectoryActionManager *setJointTrajectoryActionManager = new SetJointTrajectoryActionManager("setJointTrajectory",&staubli);
+    // Same as SetJointTrajectoryActionManager but for the more generic ros trajectory type
+    SetGenericJointTrajectoryActionManager *setGenericJointTrajectoryActionManager = new SetGenericJointTrajectoryActionManager("setFollowTrajectory",&staubli);
 
     actionManagers.push_back(setCartesianActionManager);
     actionManagers.push_back(setJointActionManager);
     actionManagers.push_back(setJointTrajectoryActionManager);
+    actionManagers.push_back(setGenericJointTrajectoryActionManager);
 
     ROS_INFO("* * * * * * * * * * * * * * * * * * * * * * * * *");
     ROS_INFO("* MAKE SURE CS8 CONTROLLER IS IN NETWORKED MODE *");
