@@ -57,6 +57,7 @@ include_directories(
    GetRotMat.srv
    InvKinematics.srv
    ResetMotion.srv
+   SetTrajectoryParams.srv
  )
 
 ## Generate actions in the 'action' folder
@@ -89,6 +90,7 @@ SET(STAUBLI_TX60_SOURCE
     src/staubliJointStatePublisher.cpp
     src/action_managers/setCartesianActionManager.cpp
     src/action_managers/setJointTrajectoryActionManager.cpp
+    src/action_managers/setGenericJointTrajectoryActionManager.cpp
     src/action_managers/setJointsActionManager.cpp
 
 )
@@ -99,6 +101,7 @@ SET(STAUBLI_TX60_HEADERS
     include/staubliJointStatePublisher.h
     include/action_managers/setCartesianActionManager.h
     include/action_managers/setJointTrajectoryActionManager.h
+    include/action_managers/setGenericJointTrajectoryActionManager.h
     include/action_managers/setJointsActionManager.h
     include/action_managers/staubliControlActionManager.h
     include/action_managers/staubliControlActionManager.hpp
