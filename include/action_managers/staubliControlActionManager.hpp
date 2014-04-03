@@ -69,9 +69,12 @@ bool StaubliControlActionManager<ActionSpec>::pollRobot(const std::vector<double
 template <class ActionSpec>
 void StaubliControlActionManager<ActionSpec>::newGoalCallback(const typename ActionSpecServer::GoalConstPtr  &goal)
 {
+    ROS_WARN("Staubli::%s: New goal recieved", actionName_.c_str());
     // If there wa sa previous goal of this type, preempt it
-    if(as_.isActive())
+    if(as_.isActive()){
         as_.setPreempted(mResult.result,"Received new goal");
+    }
+    staubli.ResetMotion();
 
     mGoal.goal = *goal;
     if(acceptGoal())
