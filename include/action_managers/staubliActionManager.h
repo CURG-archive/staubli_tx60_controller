@@ -4,6 +4,7 @@
 #include <ros/node_handle.h>
 #include "TX60L.h"
 #include "std_msgs/String.h"
+#include "staubliState.h"
 
 class StaubliActionManager
 {
@@ -51,7 +52,7 @@ public:
 
     virtual void cancelAction() = 0;
 
-    virtual void publishFeedback() = 0;
+    virtual void publishFeedback(StaubliState & state) = 0;
 };
 
 #endif /* StaubliActionManager_H */

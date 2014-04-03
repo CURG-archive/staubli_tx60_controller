@@ -8,43 +8,23 @@ SetJointsActionManager::SetJointsActionManager(const std::string & actionName, T
 }
 
 
-void SetJointsActionManager::updateFeedback()
+void SetJointsActionManager::updateFeedback(StaubliState & state)
 {
-    std::vector<double> j2;
-    j2.resize(6);
-    if(staubli.GetRobotJoints(j2))
-    {
-        mFeedback.feedback.j = j2;
-    }
-    else
-    {
-        ROS_ERROR("staubli.GetRobotJoints(j2) failed");
-    }
+
+        mFeedback.feedback.j = state.currentJoints;
+
 }
 
-void SetJointsActionManager::updateResult()
-{
-    std::vector<double> j2;
-    j2.resize(6);
-    if(staubli.GetRobotJoints(j2))
-    {
-        mResult.result.j = j2;
-    }
-    else
-    {
-        ROS_ERROR("staubli.GetRobotJoints(j2) failed");
-    }
+void SetJointsActionManager::updateResult(StaubliState & state)
+{    
+        mResult.result.j = state.currentJoints;
 }
 
-bool SetJointsActionManager::hasReachedGoal()
+bool SetJointsActionManager::hasReachedGoal(StaubliState & state)
 {
-    std::vector<double> currentJoints;
-    std::vector<double> goalJoints = mGoal.goal.j;
-    currentJoints.resize(6);
-    staubli.GetRobotJoints(currentJoints);
 
-    double error = fabs(goalJoints[0]-currentJoints[0])+ fabs(goalJoints[1]-currentJoints[1])+ fabs(goalJoints[2]-currentJoints[2])+
-            fabs(goalJoints[3]-currentJoints[3])+ fabs(goalJoints[4]-currentJoints[4])+ fabs(goalJoints[5]-currentJoints[5]);
+    double error = fabs(mGoal.goal.j[0]-state.currentJoints[0])+ fabs(mGoal.goal.j[1]-state.currentJoints[1])+ fabs(mGoal.goal.j[2]-state.currentJoints[2])+
+            fabs(mGoal.goal.j[3]-state.currentJoints[3])+ fabs(mGoal.goal.j[4]-state.currentJoints[4])+ fabs(mGoal.goal.j[5]-state.currentJoints[5]);
 
     return error < ERROR_EPSILON;
 }

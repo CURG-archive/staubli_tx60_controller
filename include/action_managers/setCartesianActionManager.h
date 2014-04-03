@@ -17,9 +17,9 @@ class SetCartesianActionManager : public StaubliControlActionManager<staubli_tx6
 
         virtual bool acceptGoal();
 
-        virtual void updateFeedback();
-        virtual void updateResult();
-        virtual bool hasReachedGoal();
+        virtual void updateFeedback(StaubliState & state);
+        virtual void updateResult(StaubliState & state);
+        virtual bool hasReachedGoal(StaubliState & state);
 
 };
 

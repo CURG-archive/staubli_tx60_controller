@@ -29,18 +29,18 @@ void StaubliControlActionManager<ActionSpec>::cancelAction()
 }
 
 template <class ActionSpec>
-bool StaubliControlActionManager<ActionSpec>::pollRobot(const std::vector<double> &goal_joints)
+bool StaubliControlActionManager<ActionSpec>::pollRobot(const std::vector<double> &goal_joints, StaubliState & state)
 {
     if(staubli.IsWorking())
     {
-        updateFeedback();
+        updateFeedback(state);
         as_.publishFeedback(mFeedback.feedback);
 
         if(isRobotFinishedMoving())
         {
-            updateResult();
+            updateResult(state);
 
-            if(hasReachedGoal())
+            if(hasReachedGoal(state))
             {
                 as_.setSucceeded(mResult.result);
                 ROS_INFO("%s GOAL Reached", actionName_.c_str() );
@@ -83,13 +83,13 @@ void StaubliControlActionManager<ActionSpec>::newGoalCallback(const typename Act
 }
 
 template <class ActionSpec>
-void StaubliControlActionManager<ActionSpec>::publishFeedback()
+void StaubliControlActionManager<ActionSpec>::publishFeedback(StaubliState & state)
 {
     if(running)
     {
         if(as_.isActive())
         {
-            running = pollRobot(mGoalValues);
+            running = pollRobot(mGoalValues, state);
         }
     }
     else

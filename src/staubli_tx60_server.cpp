@@ -104,7 +104,7 @@ void StaubliNode::run()
 
     while(ros::ok())
     {
-        currentState.updateState();
+        currentState.updateState(staubli);
 
         staubliJointStatePublisher.publish(currentState);
 
@@ -119,7 +119,7 @@ void StaubliNode::run()
             StaubliActionManager *actionManager = actionManagers.at(i);
             if(actionManager->isRunning())
             {
-                actionManager->publishFeedback();
+                actionManager->publishFeedback(currentState);
             }
         }
 

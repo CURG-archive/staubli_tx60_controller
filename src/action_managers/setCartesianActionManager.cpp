@@ -8,18 +8,18 @@ SetCartesianActionManager::SetCartesianActionManager(const std::string & actionN
 }
 
 
-void SetCartesianActionManager::updateFeedback()
+void SetCartesianActionManager::updateFeedback(StaubliState & state)
 {
     std::vector<double> now;
     now.resize(6);
     if(staubli.GetRobotCartesianPosition(now))
     {
-        mFeedback.feedback.x  = (double) now[0];
-        mFeedback.feedback.y  = (double) now[1];
-        mFeedback.feedback.z  = (double) now[2];
-        mFeedback.feedback.rx = (double) now[3];
-        mFeedback.feedback.ry = (double) now[4];
-        mFeedback.feedback.rz = (double) now[5];
+        mFeedback.feedback.x  = (double) state.currentCartesianPosition[0];
+        mFeedback.feedback.y  = (double) state.currentCartesianPosition[1];
+        mFeedback.feedback.z  = (double) state.currentCartesianPosition[2];
+        mFeedback.feedback.rx = (double) state.currentCartesianPosition[3];
+        mFeedback.feedback.ry = (double) state.currentCartesianPosition[4];
+        mFeedback.feedback.rz = (double) state.currentCartesianPosition[5];
 
     }
     else
@@ -28,32 +28,22 @@ void SetCartesianActionManager::updateFeedback()
     }
 }
 
-void SetCartesianActionManager::updateResult()
+void SetCartesianActionManager::updateResult(StaubliState & state)
 {
-    std::vector<double> now;
-    now.resize(6);
-    if(staubli.GetRobotCartesianPosition(now))
-    {
-        mResult.result.x  = (double) now[0];
-        mResult.result.y  = (double) now[1];
-        mResult.result.z  = (double) now[2];
-        mResult.result.rx = (double) now[3];
-        mResult.result.ry = (double) now[4];
-        mResult.result.rz = (double) now[5];
-
-    }
-    else
-    {
-        ROS_ERROR("staubli.GetRobotCartesianPosition(now) failed");
-    }
+        mResult.result.x  = (double) state.currentCartesianPosition[0];
+        mResult.result.y  = (double) state.currentCartesianPosition[1];
+        mResult.result.z  = (double) state.currentCartesianPosition[2];
+        mResult.result.rx = (double) state.currentCartesianPosition[3];
+        mResult.result.ry = (double) state.currentCartesianPosition[4];
+        mResult.result.rz = (double) state.currentCartesianPosition[5];
 }
 
-bool SetCartesianActionManager::hasReachedGoal()
+bool SetCartesianActionManager::hasReachedGoal(StaubliState & state)
 {
-    std::vector<double> now;
-    now.resize(6);
-    staubli.GetRobotCartesianPosition(now);
-    double error = fabs(mGoalValues[0]-now[0])+ fabs(mGoalValues[1]-now[1])+ fabs(mGoalValues[2]-now[2]);
+    // FIXME: Shouldn't this be the euclidean norm?
+    double error = fabs(mGoalValues[0]-state.currentCartesianPosition[0]) +
+            fabs(mGoalValues[1]-state.currentCartesianPosition[1])+
+                   fabs(mGoalValues[2]-state.currentCartesianPosition[2]);
 
     return (error < ERROR_EPSILON);
 }

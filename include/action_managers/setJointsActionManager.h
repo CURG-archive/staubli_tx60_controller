@@ -10,9 +10,9 @@ class SetJointsActionManager: public StaubliControlActionManager<staubli_tx60::S
       SetJointsActionManager(const std::string & actionName, TX60L * st);
       virtual bool acceptGoal();
 
-      virtual void updateFeedback();
-      virtual void updateResult();
-      virtual bool hasReachedGoal();
+      virtual void updateFeedback(StaubliState & state);
+      virtual void updateResult(StaubliState & state);
+      virtual bool hasReachedGoal(StaubliState & state);
 };
 
 #endif /* SetJointsAction_H */

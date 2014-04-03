@@ -33,13 +33,13 @@ protected:
     *
     *@returns whether the goal is still in progress
     */
-    bool pollRobot( const std::vector<double> &goal_joints);
+    bool pollRobot( const std::vector<double> &goal_joints, StaubliState & state);
 
     //these are helpers to poll robot that are
     //specific to the subclasses
-    virtual void updateFeedback() = 0;
-    virtual void updateResult() = 0;
-    virtual bool hasReachedGoal() = 0;
+    virtual void updateFeedback(StaubliState & state) = 0;
+    virtual void updateResult(StaubliState & state) = 0;
+    virtual bool hasReachedGoal(StaubliState & state) = 0;
 
     bool isRobotFinishedMoving(){return staubli.IsJointQueueEmpty() && staubli.IsRobotSettled();}
 
@@ -63,7 +63,7 @@ public:
     /* @brief runFeedback - Poll the goal to make sure it is still running and legal, send any feedback that needs sending
     * to the actions' clients
     */
-    virtual void publishFeedback();
+    virtual void publishFeedback(StaubliState & state);
 
 
 
