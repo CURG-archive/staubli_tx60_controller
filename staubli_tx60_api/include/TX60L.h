@@ -19,6 +19,7 @@ class ns6__Config;
 class TX60L {
 private:
 	bool mIsLoggedIn;
+    bool lastRequestSucceeded;
 	std::string mEndpoint, mEndpointV1, mEndpointV3;
 	CS8ServerV0Proxy *mCS8ServerV0;
 	CS8ServerV1Proxy *mCS8ServerV1;
@@ -52,6 +53,7 @@ public:
 	bool Power(bool on);
 	bool Stop();
 	bool Restart();
+    bool IsWorking(){return mIsLoggedIn && lastRequestSucceeded;}
 
 	//----------------- Helper functions--------//
 	void InitializeMotionDesc(ns6__MotionDesc * md);

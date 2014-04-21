@@ -48,17 +48,19 @@ bool TX60L::Login(const string& url, const string& userName, const string& passw
 	mCS8ServerV3 = new CS8ServerV3Proxy();
 	mCS8ServerV3->soap_header(&(mLoginResponse->sid));
 	mCS8ServerV3->soap_endpoint = mEndpointV3.c_str();
-
+    lastRequestSucceeded = mIsLoggedIn;
 	return mIsLoggedIn;
 }
 
 void TX60L::Logoff(){
   boost::lock_guard<boost::mutex> lock(RobotLock);
-	if(!mIsLoggedIn)
-		return;
+  if(!mIsLoggedIn)
+   return;
+
 	_ns1__logout *logout = new _ns1__logout();
 	_ns1__logoutResponse *logoutResponse = new _ns1__logoutResponse();
-	mCS8ServerV0->logout(logout, logoutResponse);
+    lastRequestSucceeded = mCS8ServerV0->logout(logout, logoutResponse) == SOAP_OK;
+    mIsLoggedIn = false;
 	delete logout;
 	delete logoutResponse;
 }
@@ -66,9 +68,15 @@ void TX60L::Logoff(){
 bool TX60L::SetJoints(const std::vector<double>& joints){
   boost::lock_guard<boost::mutex> lock(RobotLock);
 	if(joints.size() != 6)
-		return false;
-	if(!mIsLoggedIn)
-		return false;
+    {
+        lastRequestSucceeded = false;
+        return false;
+    }
+    if(!mIsLoggedIn)
+    {
+        lastRequestSucceeded = false;
+        return false;
+    }
 	_ns1__setRobotJointPos *setJoint = new _ns1__setRobotJointPos();
 	_ns1__setRobotPosResponse *setJointResponse = new _ns1__setRobotPosResponse();
 	ns1__JointPos *jp = new ns1__JointPos();
@@ -77,7 +85,7 @@ bool TX60L::SetJoints(const std::vector<double>& joints){
 		jp->item.push_back(joints[i]);
 	}
 	setJoint->pos = jp;
-	mCS8ServerV0->setRobotJointPos(setJoint, setJointResponse);
+    lastRequestSucceeded = mCS8ServerV0->setRobotJointPos(setJoint, setJointResponse) == SOAP_OK;
 	delete setJoint;
 	delete setJointResponse;
 	delete jp;
@@ -86,30 +94,43 @@ bool TX60L::SetJoints(const std::vector<double>& joints){
 
 bool TX60L::GetRobotJoints(std::vector<double>& joints){
   boost::lock_guard<boost::mutex> lock(RobotLock);
-	if(!mIsLoggedIn)
-		return false;
+  if(!mIsLoggedIn)
+  {
+      lastRequestSucceeded = false;
+      return false;
+  }
 	_ns1__getRobotJointPos* robotJoints = new _ns1__getRobotJointPos();
 	_ns1__getRobotJointPosResponse* robotJointsResponse = new _ns1__getRobotJointPosResponse();
-	mCS8ServerV0->getRobotJointPos(robotJoints, robotJointsResponse);
+    lastRequestSucceeded = mCS8ServerV0->getRobotJointPos(robotJoints, robotJointsResponse) == SOAP_OK;
+
 	joints = robotJointsResponse->pos->item;
 	delete robotJoints;
 	delete robotJointsResponse;
 	if(joints.size() != 6){
 		joints.clear();
+        lastRequestSucceeded = false;
 		return false;
 	}
-	return true;
+
+    return lastRequestSucceeded;
 }
 
 bool TX60L::GetRobotCartesianPosition(std::vector<double>& position){
   boost::lock_guard<boost::mutex> lock(RobotLock);
 	if(!mIsLoggedIn)
+    {
+        lastRequestSucceeded = false;
 		return false;
-
+    }
 	_ns1__getRobotJntCartPos* cartesianPos = new _ns1__getRobotJntCartPos();
 	_ns1__getRobotJntCartPosResponse* cartesianPosResponse = new _ns1__getRobotJntCartPosResponse();
-	mCS8ServerV0->getRobotJntCartPos(cartesianPos, cartesianPosResponse);
+    if(mCS8ServerV0->getRobotJntCartPos(cartesianPos, cartesianPosResponse))
+    {
+        lastRequestSucceeded = false;
+        return false;
+    }
 	position.clear();
+
 	position.push_back(cartesianPosResponse->cartPos->x);
 	position.push_back(cartesianPosResponse->cartPos->y);
 	position.push_back(cartesianPosResponse->cartPos->z);
@@ -118,16 +139,24 @@ bool TX60L::GetRobotCartesianPosition(std::vector<double>& position){
 	position.push_back(cartesianPosResponse->cartPos->rz);
 	delete cartesianPos;
 	delete cartesianPosResponse;
+    lastRequestSucceeded = true;
 	return true;
 }
 
 bool TX60L::GetRobots(std::vector<int>& robots){
   boost::lock_guard<boost::mutex> lock(RobotLock);
-	if(!mIsLoggedIn)
-		return false;
+  if(!mIsLoggedIn)
+  {
+      lastRequestSucceeded = false;
+      return false;
+  }
 	_ns1__getRobots * robotsInput = new _ns1__getRobots();
 	_ns1__getRobotsResponse * robotsResponse = new _ns1__getRobotsResponse();
-	mCS8ServerV0->getRobots(robotsInput, robotsResponse);
+    if(mCS8ServerV0->getRobots(robotsInput, robotsResponse))
+    {
+        lastRequestSucceeded = false;
+        return false;
+    }
 	delete robotsInput;
 	delete robotsResponse;
 	return true;
@@ -136,31 +165,37 @@ bool TX60L::GetRobots(std::vector<int>& robots){
 //----------------------------------------Server V1----------------------------------------//
 bool TX60L::GetApplications(std::vector<std::string>& appNames){
   boost::lock_guard<boost::mutex> lock(RobotLock);
-	if(!mIsLoggedIn)
-		return false;
+  if(!mIsLoggedIn)
+  {
+      lastRequestSucceeded = false;
+      return false;
+  }
 	_ns2__getApplications * applications = new _ns2__getApplications();
 	_ns2__getApplicationsResponse * applicationsResponse = new _ns2__getApplicationsResponse();
-	mCS8ServerV1->getApplications(applications, applicationsResponse);
+    lastRequestSucceeded = mCS8ServerV1->getApplications(applications, applicationsResponse) == SOAP_OK;
 	for(size_t i = 0; i < applicationsResponse->applications->application.size(); ++i){
 		appNames.push_back(* (applicationsResponse->applications->application[i]->name) );
 	}
 	delete applications;
 	delete applicationsResponse;
-	return true;
+    return lastRequestSucceeded;
 }
 
 bool TX60L::GetJointRange(std::vector<double>& min, std::vector<double>& max){
   boost::lock_guard<boost::mutex> lock(RobotLock);
-	if(!mIsLoggedIn)
-		return false;
+  if(!mIsLoggedIn)
+  {
+      lastRequestSucceeded = false;
+      return false;
+  }
 	_ns2__getJointRange * jointRange = new _ns2__getJointRange();
 	_ns2__getJointRangeResponse * jointRangeResponse = new _ns2__getJointRangeResponse();
-	mCS8ServerV1->getJointRange(jointRange, jointRangeResponse);
+    lastRequestSucceeded = mCS8ServerV1->getJointRange(jointRange, jointRangeResponse) == SOAP_OK;
 	min = jointRangeResponse->range->min_;
 	max = jointRangeResponse->range->max_;
 	delete jointRange;
 	delete jointRangeResponse;
-	return true;
+    return lastRequestSucceeded;
 }
 
 //------------------------------Server V3------------------------------//
@@ -171,17 +206,21 @@ bool TX60L::ResetMotion(){
 		return false;
 	_ns6__resetMotion * resetMotion = new _ns6__resetMotion();
 	_ns6__motionResponse * resetMotionResponse = new _ns6__motionResponse();
-	mCS8ServerV3->resetMotion(resetMotion, resetMotionResponse);
+    lastRequestSucceeded = mCS8ServerV3->resetMotion(resetMotion, resetMotionResponse) == SOAP_OK;
+
 	delete resetMotion;
 	delete resetMotionResponse;
-	return true;
+    return lastRequestSucceeded;
 }
 
 bool TX60L::MoveJoints(std::vector<double> jnts, int btype, double jointvel, 
 		       double acc, double dec, double tooltipvel, double rotvel, double blendPrev, double blendNext){
   boost::lock_guard<boost::mutex> lock(RobotLock);
 	if(!mIsLoggedIn)
-		return false;
+    {
+        lastRequestSucceeded = false;
+        return false;
+    }
 	_ns6__moveJJ * joints = new _ns6__moveJJ();
 	_ns6__moveResponse * jointsResponse = new _ns6__moveResponse();
 
@@ -197,13 +236,14 @@ bool TX60L::MoveJoints(std::vector<double> jnts, int btype, double jointvel,
 	InitializeMotionDesc(md);
 	joints->mdesc = md;
 
-	int ret = mCS8ServerV3->moveJJ(joints, jointsResponse);
+    lastRequestSucceeded = mCS8ServerV3->moveJJ(joints, jointsResponse) == SOAP_OK;
 	//cout << "ret good? " << (ret==SOAP_OK) << endl;
-	
+
 
 	delete joints;
 	delete jointsResponse;
-	return true;
+
+    return lastRequestSucceeded;
 }
 
 bool TX60L::IsJointQueueEmpty(){
@@ -217,18 +257,29 @@ bool TX60L::IsJointQueueEmpty(){
 
 bool TX60L::IsRobotSettled(){
   boost::lock_guard<boost::mutex> lock(RobotLock);
+  if(!mIsLoggedIn)
+  {
+      lastRequestSucceeded = false;
+      return false;
+  }
   _ns6__schedulerRefresh  sr_req;
   _ns6__MotionAndRobotsPos sr_resp;
   if(mCS8ServerV3->schedulerRefresh(&sr_req, &sr_resp) != SOAP_OK)
+  {
     std::cout<< "TX60L::IsJointQueueEmpty::SOAP ERROR \n";
+    lastRequestSucceeded = false;
+  }
   return sr_resp.allRobotsPos->RobotsPos[0]->settled;   
 
 }
 
 bool TX60L::InverseKinematics(std::vector<double> pos, std::vector<double> start, std::vector<double> &jnts){
   boost::lock_guard<boost::mutex> lock(RobotLock);
-	if(!mIsLoggedIn)
-		return false;
+  if(!mIsLoggedIn)
+  {
+      lastRequestSucceeded = false;
+      return false;
+  }
 	_ns6__reverseKin *inverseKin = new _ns6__reverseKin();
 	_ns6__reverseKinResponse *inverseKinResponse = new _ns6__reverseKinResponse();
 
@@ -258,18 +309,21 @@ bool TX60L::InverseKinematics(std::vector<double> pos, std::vector<double> start
 	ns2__JointRange *jRange = new ns2__JointRange();
 	inverseKin->jointRange = jRange;
 
-	mCS8ServerV3->reverseKin(inverseKin, inverseKinResponse);
+    lastRequestSucceeded = mCS8ServerV3->reverseKin(inverseKin, inverseKinResponse) == SOAP_OK;
 	jnts=inverseKinResponse->jointOut->item;
 
 	delete inverseKin;
 	delete inverseKinResponse;
-	return true;
+    return lastRequestSucceeded;
 }
 
 bool TX60L::ForwardKinematics(std::vector<double> jnts, std::vector<double> &pos){
   boost::lock_guard<boost::mutex> lock(RobotLock);
-	if(!mIsLoggedIn)
-		return false;
+  if(!mIsLoggedIn)
+  {
+      lastRequestSucceeded = false;
+      return false;
+  }
 	double Rx=0,Ry=0,Rz=0;
 	_ns6__forwardKin *forwardKin = new _ns6__forwardKin();
 	_ns6__forwardKinResponse *forwardKinResponse = new _ns6__forwardKinResponse();
@@ -282,11 +336,11 @@ bool TX60L::ForwardKinematics(std::vector<double> jnts, std::vector<double> &pos
 	jointPos->item = jnts;
 	forwardKin->joint = jointPos;
 
-	mCS8ServerV3->forwardKin(forwardKin, forwardKinResponse);
+    lastRequestSucceeded = mCS8ServerV3->forwardKin(forwardKin, forwardKinResponse) == SOAP_OK;
 	ns6__Frame *responseFrame= new ns6__Frame();
 	responseFrame=forwardKinResponse->position;
 	
-	GetRxRyRzCoord(responseFrame, &Rx,&Ry,&Rz);
+    GetRxRyRzCoord(responseFrame, &Rx,&Ry,&Rz);
 
 	pos.push_back(forwardKinResponse->position->px);
 	pos.push_back(forwardKinResponse->position->py);
@@ -300,49 +354,61 @@ bool TX60L::ForwardKinematics(std::vector<double> jnts, std::vector<double> &pos
 
 	delete forwardKin;
 	delete forwardKinResponse;
-	return true;
+    return lastRequestSucceeded;
 }
 bool TX60L::Power(bool on){
   boost::lock_guard<boost::mutex> lock(RobotLock);
-	if(!mIsLoggedIn)
-		return false;
+  if(!mIsLoggedIn)
+  {
+      lastRequestSucceeded = false;
+      return false;
+  }
 	_ns6__setPower * power = new _ns6__setPower();
 	power->power = on;
 	_ns6__setPowerResponse * powerResponse = new _ns6__setPowerResponse();
-	mCS8ServerV3->setPower(power, powerResponse);
+    lastRequestSucceeded = mCS8ServerV3->setPower(power, powerResponse) == SOAP_OK;
 	delete power;
 	delete powerResponse;
-	return true;
+    return lastRequestSucceeded;
 }
 
 bool TX60L::Stop(){
   boost::lock_guard<boost::mutex> lock(RobotLock);
-	if(!mIsLoggedIn)
-		return false;
+  if(!mIsLoggedIn)
+  {
+      lastRequestSucceeded = false;
+      return false;
+  }
 	_ns6__stopMotion * motion = new _ns6__stopMotion();
 	_ns6__motionResponse * motionResponse = new _ns6__motionResponse();
-	mCS8ServerV3->stopMotion(motion, motionResponse);
+    lastRequestSucceeded = mCS8ServerV3->stopMotion(motion, motionResponse) == SOAP_OK;
 	delete motion;
 	delete motionResponse;
-	return true;
+    return lastRequestSucceeded;
 }
 
 bool TX60L::Restart(){
   boost::lock_guard<boost::mutex> lock(RobotLock);
-	if(!mIsLoggedIn)
-		return false;
+  if(!mIsLoggedIn)
+  {
+      lastRequestSucceeded = false;
+      return false;
+  }
 	_ns6__restartMotion * motion = new _ns6__restartMotion();
 	_ns6__motionResponse * motionResponse = new _ns6__motionResponse();
-	mCS8ServerV3->restartMotion(motion, motionResponse);
+    lastRequestSucceeded = mCS8ServerV3->restartMotion(motion, motionResponse) == SOAP_OK;
 	delete motion;
 	delete motionResponse;
-	return true;
+    return lastRequestSucceeded;
 }
 
 bool TX60L::MoveLine(std::vector<double> pos, double jointvel, double acc, double dec){
   boost::lock_guard<boost::mutex> lock(RobotLock);
-	if(!mIsLoggedIn)
-		return false;
+  if(!mIsLoggedIn)
+  {
+      lastRequestSucceeded = false;
+      return false;
+  }
 	_ns6__moveL * moveL = new _ns6__moveL();
 	
 	//initialize the frame
@@ -362,12 +428,12 @@ bool TX60L::MoveLine(std::vector<double> pos, double jointvel, double acc, doubl
 	moveL->mdesc = md;
 	_ns6__moveResponse * moveResponse = new _ns6__moveResponse();
 
-	int ret = mCS8ServerV3->moveL(moveL, moveResponse);
+    lastRequestSucceeded = mCS8ServerV3->moveL(moveL, moveResponse) == SOAP_OK;
 	//cout << "ret good? " << (ret==SOAP_OK) << endl;
 
 	delete moveL;
 	delete moveResponse;
-	return true;
+    return lastRequestSucceeded;
 }
 
 void TX60L::GetRxRyRzCoord(ns6__Frame *x_fr, double *x_Rx, double *x_Ry, double *x_Rz)

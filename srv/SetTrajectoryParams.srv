@@ -1,0 +1,7 @@
+staubli_tx60/StaubliMovementParams params
+int32 trajectoryPart
+int32 TRAJECTORY_START = 0
+int32 TRAJECTORY_INTERIOR = 1
+int32 TRAJECTORY_END = 2
+---
+bool succeeded
