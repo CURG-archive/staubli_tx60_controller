@@ -23,8 +23,13 @@ void StaubliControlActionManager<ActionSpec>::cancelAction()
 {
     if(as_.isActive())
     {
+        ROS_WARN("%s::cancelAction::Last action cancelled",actionName_.c_str());
         staubli.ResetMotion();
         as_.setPreempted(mResult.result,"Action preempted by another action");
+        if(!actionName_.compare("setFollowTrajectory"))
+        {
+            ROS_WARN("%s::cancelAction::Cancelled follow trajectory",actionName_.c_str());
+        }
     }
 }
 
@@ -43,7 +48,7 @@ bool StaubliControlActionManager<ActionSpec>::pollRobot(const std::vector<double
             if(hasReachedGoal(state))
             {
                 as_.setSucceeded(mResult.result);
-                ROS_INFO("%s GOAL Reached", actionName_.c_str() );
+                ROS_INFO("%s GOAL Reached", actionName_.c_str());
             }
             else
             {
@@ -103,16 +108,24 @@ void StaubliControlActionManager<ActionSpec>::publishFeedback(StaubliState & sta
 {
     if(running)
     {
-        if(as_.isActive())
+      if(as_.isActive())
         {
-            running = pollRobot(mGoalValues, state);
+	  if(as_.isPreemptRequested())
+      {
+          ROS_INFO("Staubli::%s::Action preempted", actionName_.c_str());
+          cancelAction();
+
+      }
+
+	  running = pollRobot(mGoalValues, state);
         }
     }
     else
     {
+      
         if(as_.isActive())
         {
-            ROS_ERROR("%s is active, but not set to running!", actionName_.c_str() );
+            ROS_ERROR("%s is active, but not set to running!", actionName_.c_str());
         }
     }
 }
