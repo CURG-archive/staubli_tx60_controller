@@ -46,8 +46,13 @@ protected:
 
 public:
     StaubliControlActionManager(const std::string & actionName, const std::string & actionTopic ,TX60L * st) : StaubliActionManager (actionName, st),
-        as_(nh_, actionTopic, boost::bind(&StaubliControlActionManager::newGoalCallback, this, _1))
+        as_(nh_, actionTopic, false)
     {
+        ROS_INFO("StaubliControlActionManager::%s::In constructor",actionTopic.c_str());
+        as_.registerGoalCallback(boost::bind(&StaubliControlActionManager::newGoalCallback, this));
+        as_.registerPreemptCallback(boost::bind(&StaubliControlActionManager::preemptCallback, this));
+        as_.start();
+        ROS_INFO("StaubliControlActionManager::%s::Started Action",actionTopic.c_str());
     }
 
     virtual bool acceptGoal() = 0;
@@ -58,7 +63,7 @@ public:
     * and send the new goal to the robot
     */
     void newGoalCallback(const typename ActionSpecServer::GoalConstPtr  &goal);
-
+    void newGoalCallback();
 
     /* @brief runFeedback - Poll the goal to make sure it is still running and legal, send any feedback that needs sending
     * to the actions' clients

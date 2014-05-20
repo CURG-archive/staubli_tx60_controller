@@ -53,6 +53,12 @@ public:
 
     virtual void cancelAction() = 0;
 
+    virtual void preemptCallback()
+    {
+        ROS_WARN("Staubli::%s::In preempt callback",actionName_.c_str());
+        cancelAction();
+    }
+
     virtual void publishFeedback(StaubliState & state) = 0;
 };
 

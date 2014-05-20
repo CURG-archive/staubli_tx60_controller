@@ -65,22 +65,35 @@ bool StaubliControlActionManager<ActionSpec>::pollRobot(const std::vector<double
     return true;
 }
 
+template <class ActionSpec>
+void StaubliControlActionManager<ActionSpec>::newGoalCallback()
+{
+    ROS_INFO("%s::newGoalCallback::New action sent",actionName_.c_str());
+    const typename ActionSpecServer::GoalConstPtr goal = as_.acceptNewGoal();
+    newGoalCallback(goal);
+}
 
 template <class ActionSpec>
 void StaubliControlActionManager<ActionSpec>::newGoalCallback(const typename ActionSpecServer::GoalConstPtr  &goal)
 {
     ROS_WARN("Staubli::%s: New goal recieved", actionName_.c_str());
     // If there wa sa previous goal of this type, preempt it
-    if(as_.isActive()){
-        as_.setPreempted(mResult.result,"Received new goal");
-    }
+    //if(as_.isActive()){
+    //    as_.setPreempted(mResult.result,"Received new goal");
+    //}
     staubli.ResetMotion();
 
     mGoal.goal = *goal;
-    if(acceptGoal())
+    if(!acceptGoal())
     {
-        as_.acceptNewGoal();
+      as_.setAborted(mResult.result,"Failed to start goal");
+	ROS_ERROR("Staubli::%s: New goal failed", actionName_.c_str());
+	
     }
+    else
+      {
+	ROS_WARN("Staubli::%s: New goal accepted", actionName_.c_str());
+      }
     // Preempt any other goals and mark this one as running
     activateAction();
 }
