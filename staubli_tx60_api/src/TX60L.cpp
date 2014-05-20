@@ -230,7 +230,7 @@ bool TX60L::MoveJoints(std::vector<double> jnts, int btype, double jointvel,
 	joints->joint = jointPos;
 
 	//initialize the motion desctiptor
-	ns6__MotionDesc * md = new ns6__MotionDesc(ns6__BlendType(ns6__BlendType__BLEND_JOINT), blendPrev, blendNext,
+    ns6__MotionDesc * md = new ns6__MotionDesc(ns6__BlendType(btype), blendPrev, blendNext,
 						   jointvel, acc, dec,
 						   tooltipvel, rotvel);
 	InitializeMotionDesc(md);
