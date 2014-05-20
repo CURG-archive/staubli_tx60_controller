@@ -1,3 +1,6 @@
 <launch>
   <node name="staubli_controller" pkg="staubli_tx60"  type="staubli_tx60_server" args="http://192.168.11.254:5653/" respawn="true" />
+  <!-- Given the published joint states, publish tf for the robot links -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="true" output="screen" />
+
 </launch>
