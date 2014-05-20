@@ -55,8 +55,8 @@ bool SetJointTrajectoryActionManager::acceptGoal()
         }
     }
 
-    if (!as_.isActive() || staubli.IsJointQueueEmpty()){
-        ROS_INFO("Goal Not Active!!");
+    if (staubli.IsJointQueueEmpty()){
+        ROS_INFO("SetJointTrajectoryActionManager::Goal Not Active!!");
         return false;
     }
 
