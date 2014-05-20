@@ -124,7 +124,7 @@ bool SetGenericJointTrajectoryActionManager::hasReachedGoal(StaubliState & state
 {
     double error = fabs(mGoalValues[0]-state.currentJoints[0])+ fabs(mGoalValues[1]-state.currentJoints[1])+ fabs(mGoalValues[2]-state.currentJoints[2])+
             fabs(mGoalValues[3]-state.currentJoints[3])+ fabs(mGoalValues[4]-state.currentJoints[4])+ fabs(mGoalValues[5]-state.currentJoints[5]);
-
+    ROS_INFO("SetGenericJointTrajectoryActionManager::hasReachedGoal::Goal error magnitude %f",error);
     return error < ERROR_EPSILON;
 }
 

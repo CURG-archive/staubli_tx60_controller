@@ -1,6 +1,6 @@
 #include "action_managers/staubliControlActionManager.h"
 
-#define ERROR_EPSILON 1E-4
+#define ERROR_EPSILON 1E-2
 
 template <class ActionSpec>
 void StaubliControlActionManager <ActionSpec>::abortHard()
