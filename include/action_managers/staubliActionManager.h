@@ -38,8 +38,9 @@ public:
 
     virtual void actionCancelledCB(const std_msgs::StringConstPtr &msg){
 
-        if(running && !actionName_.compare(msg->data))
+        if(running && actionName_.compare(msg->data))
         {
+            ROS_WARN("Staubli::%s::Cancelled action with message %s",actionName_.c_str(), msg->data.c_str());
             cancelAction();
             running = false;
         }
