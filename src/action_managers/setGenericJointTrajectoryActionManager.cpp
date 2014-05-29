@@ -170,10 +170,10 @@ bool SetGenericJointTrajectoryActionManager::acceptGoal()
         }
     }
 
-    if (staubli.IsJointQueueEmpty()){
+    if (staubli.IsJointQueueEmpty() && staubli.IsRobotSettled()){
         ROS_INFO("SetGenericJointTrajectoryActionManager::Goal Not Active!!");
         return false;
     }
-    mGoalValues = staubliJointTrajActionGoal->goal.jointTrajectory.front().jointValues;
+    mGoalValues = staubliJointTrajActionGoal->goal.jointTrajectory.back().jointValues;
     return true;
 }

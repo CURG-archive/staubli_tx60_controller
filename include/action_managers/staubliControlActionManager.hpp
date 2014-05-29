@@ -117,7 +117,7 @@ void StaubliControlActionManager<ActionSpec>::publishFeedback(StaubliState & sta
 
       }
 
-	  running = pollRobot(mGoalValues, state);
+        running = pollRobot(mGoalValues, state);
         }
     }
     else
